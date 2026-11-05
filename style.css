@@ -195,8 +195,38 @@ body{
 }
 
 .hero-wrapper{
-    height:250vh;
+    height:300vh;
     position:relative;
+}
+
+html{
+    scroll-snap-type:none;
+}
+
+/* one scroll step per stage: hero, journey, camera push-in */
+.snap-point{
+    position:absolute;
+    left:0;
+
+    width:100%;
+    height:100vh;
+
+    pointer-events:none;
+
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+}
+
+.snap-a{
+    top:0;
+}
+
+.snap-b{
+    top:100vh;
+}
+
+.snap-c{
+    top:200vh;
 }
 
 .hero-heading{
@@ -216,7 +246,7 @@ body{
     display: block;
     width: max-content;
     font-size:1rem;
-    letter-spacing:6px;
+    letter-spacing:2px;
     text-transform: uppercase;
     font-size: .95rem;
     margin-bottom:20px;
@@ -483,6 +513,20 @@ body{
 
     opacity:1;
 }
+
+/* the dashed route runs behind the labels, so the glyphs carry their own
+   background-coloured halo - it keeps the text legible without masking
+   the portrait behind it */
+.stamp-content h4,
+.stamp-content p{
+    text-shadow:
+        0 0 3px #0d0d0d,
+        0 0 3px #0d0d0d,
+        1px 0 0 #0d0d0d,
+        -1px 0 0 #0d0d0d,
+        0 1px 0 #0d0d0d,
+        0 -1px 0 #0d0d0d;
+}
 .stamp-subtitle{
     font-size:.7rem;
     letter-spacing:2px;
@@ -510,11 +554,11 @@ body{
 
 
 .stamp-2 .stamp-line{
-    transition-delay:.1s;
+    transition-delay:.4s;
 }
 
 .stamp-2 .stamp-content{
-    transition-delay:.25s;
+    transition-delay:.55s;
 }
 
 .stamp-3 .stamp-line{
@@ -526,19 +570,19 @@ body{
 }
 
 .stamp-4 .stamp-line{
-    transition-delay:.4s;
+    transition-delay:.1s;
 }
 
 .stamp-4 .stamp-content{
-    transition-delay:.55s;
+    transition-delay:.25s;
 }
 
 .stamp-5 .stamp-line{
-    transition-delay:.55s;
+    transition-delay:0s;
 }
 
 .stamp-5 .stamp-content{
-    transition-delay:.7s;
+    transition-delay:0s;
 }
 
 
@@ -552,8 +596,16 @@ body{
     transform-origin:right center;
 }
 
+.stamp-1 .stamp-line{
+    transition-delay:.55s;
+}
+
 .stamp-1 .stamp-content{
-    transform:translateX(145px);
+    transition-delay:.7s;
+}
+
+.stamp-1 .stamp-content{
+    transform:translateX(50px);
 }
 
 .stamp-3 .stamp-content{
@@ -573,6 +625,9 @@ body{
 
 .hero.about-view .stamp-content{
     transform: translateX(0);
+
+    /* keeps the route from showing through the stamp text */
+    background:#0d0d0d;
 }
 
 .hero.about-view .stamp-content p{
@@ -584,6 +639,14 @@ body{
 
     .journey-stamp{
         display:none;
+    }
+
+    html{
+        scroll-snap-type:none;
+    }
+
+    .hero-wrapper{
+        height:250vh;
     }
 
 }
@@ -690,4 +753,126 @@ body{
 .show-icon{
     opacity:1 !important;
     transform:translateY(0) scale(1) !important;
+}
+/* ===== PAPER TEAR TRANSITION ===== */
+
+.paper-filter{
+    position:absolute;
+    width:0;
+    height:0;
+    overflow:hidden;
+    pointer-events:none;
+}
+
+.paper-tear{
+    position:absolute;
+    inset:0;
+
+    z-index:6;
+    pointer-events:none;
+    overflow:hidden;
+
+    opacity:0;
+
+    --paper-grain:0;
+    --paper-crinkle:0;
+}
+
+.paper-half{
+    position:absolute;
+    inset:0;
+
+    transform-origin:center center;
+    backface-visibility:hidden;
+    will-change:transform,opacity;
+
+    /* a faint sheet surface so the paper reads as a physical thing */
+    background-color:rgba(245,245,245,var(--paper-wash,0));
+
+    /* keeps the ragged cut from showing a hairline seam */
+    outline:1px solid transparent;
+}
+
+.paper-clone{
+    pointer-events:none;
+}
+
+/* the original sheet's top margin collapses through .hero-copy;
+   the absolute clone needs that margin removed to line up exactly */
+.paper-clone > .hero-tag{
+    margin-top:0;
+}
+
+/* crumpled paper highlights, pre-rendered so scrolling stays cheap */
+.paper-half::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:3;
+
+    pointer-events:none;
+
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='420'%20height='420'%3E%3Cfilter%20id='c'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.012%200.02'%20numOctaves='4'%20seed='6'%20stitchTiles='stitch'%20result='t'/%3E%3CfeDiffuseLighting%20in='t'%20lighting-color='%23ffffff'%20surfaceScale='2.4'%3E%3CfeDistantLight%20azimuth='135'%20elevation='58'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect%20width='420'%20height='420'%20filter='url(%23c)'%20opacity='0.85'/%3E%3C/svg%3E");
+    background-size:420px 420px;
+
+    mix-blend-mode:soft-light;
+    opacity:var(--paper-crinkle);
+}
+
+/* fine white paper fibre dust */
+.paper-half::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:3;
+
+    pointer-events:none;
+
+    background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='3'%20stitchTiles='stitch'%20result='n'/%3E%3CfeColorMatrix%20in='n'%20type='matrix'%20values='0%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200.9%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23g)'%20opacity='0.6'/%3E%3C/svg%3E");
+    background-size:180px 180px;
+
+    mix-blend-mode:screen;
+    opacity:var(--paper-grain);
+}
+
+/* bright, fibrous torn edge */
+.paper-half .tear-line{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:4;
+
+    pointer-events:none;
+    overflow:visible;
+}
+
+.paper-half .tear-line polyline{
+    fill:none;
+
+    stroke:#f5f5f5;
+    stroke-width:2.2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+
+    vector-effect:non-scaling-stroke;
+
+    filter:drop-shadow(0 0 4px rgba(255,255,255,.85));
+}
+
+.paper-dust{
+    position:absolute;
+    inset:0;
+    z-index:5;
+
+    pointer-events:none;
+
+    background:
+        radial-gradient(circle at 50% 48%,
+            rgba(255,255,255,.22) 0%,
+            rgba(255,255,255,.06) 34%,
+            rgba(255,255,255,0) 62%);
+
+    mix-blend-mode:screen;
+    opacity:0;
 }

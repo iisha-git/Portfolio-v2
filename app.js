@@ -25,4 +25,14 @@ window.addEventListener("load", () => {
     dashedPath.style.opacity = "1";
 }, 2500);
 
+    document.querySelectorAll(".nav-links a[data-scroll]").forEach(link => {
+        link.addEventListener("click", e => {
+            e.preventDefault();
+            window.scrollTo({
+                top: parseInt(link.dataset.scroll),
+                behavior: "smooth"
+            });
+        });
+    });
+
 });

@@ -15,7 +15,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <section class="hero-wrapper">
+    <section class="hero-wrapper" id="home">
+        <div class="snap-point snap-a"></div>
+        <div class="snap-point snap-b"></div>
+        <div class="snap-point snap-c"></div>
         <section class="hero">
         <nav class="navbar">
 
@@ -25,8 +28,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 
 
     <ul class="nav-links">
-        <li><a href="#home">Home</a></li>
-        <li><a href="#about">About</a></li>
+        <li><a href="#home" data-scroll="0">Home</a></li>
+        <li><a href="#about" data-scroll="500">About</a></li>
         <li><a href="#projects">Projects</a></li>
         <li><a href="#skills">Skills</a></li>
         <li><a href="#contact">Contact</a></li>
@@ -67,8 +70,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
             <h4>STARTED BUILDING</h4>
 
             <p>
-                Eventually, designing products
-                and understanding them wasn't enough.
+                Designing it wasn't enough
+                anymore. I needed to build
+                what I was designing.
             </p>
 
         </div>
@@ -93,9 +97,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
             <h4>DOWN THE RABBIT HOLE</h4>
 
             <p>
-                That question led everywhere—
-                products, frontend, systems and
-                the people building them.
+                That question pulled me into
+                products, frontend, systems,
+                and the people using them.
             </p>
         </div>
 
@@ -112,8 +116,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
             <h4>WHAT'S BEYOND DESIGN?</h4>
 
             <p>
-                I didn't want my role to end
-                when the designs were finished.
+                Inside NIFT, one question
+                stayed: what happens after
+                the design is done?
             </p>
 
         </div>
@@ -132,11 +137,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 
         <div class="stamp-content">
 
-            <h4>NIFT'24</h4>
+            <h4>NIFT 2024</h4>
 
             <p>
-                AIR 1342 — the first sign
-                design could be pursued seriously.
+                AIR 1342. Got in — the goal
+                stopped being a maybe and
+                became the plan.
             </p>
 
         </div>
@@ -159,10 +165,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 
         <div class="stamp-content">
 
-            <h4>FELL FOR DESIGN</h4>
+            <h4>AIMING FOR NIFT</h4>
 
             <p>
-                The starting point.
+                Not a backup plan. Design was
+                the career I wanted, and NIFT
+                was the way in.
             </p>
 
         </div>
@@ -230,6 +238,15 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 
 </section>
     </section>
+
+<svg class="paper-filter" aria-hidden="true" focusable="false">
+    <defs>
+        <filter id="paperCrumple" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+            <feTurbulence id="paperCrumpleNoise" type="fractalNoise" baseFrequency="0.012 0.026" numOctaves="3" seed="9" result="noise"/>
+            <feDisplacementMap id="paperCrumpleMap" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+    </defs>
+</svg>
 
 <script src="app.js"></script>
 <script src="rail.js"></script>
