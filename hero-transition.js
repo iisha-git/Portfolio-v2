@@ -1,179 +1,135 @@
 const hero = document.querySelector(".hero");
 const heroCopy = document.querySelector(".hero-copy");
 const heroImage = document.querySelector(".hero-image");
+const heroContent = document.querySelector(".hero-content");
 const heroWrapper = document.querySelector(".hero-wrapper");
 const navbar = document.querySelector(".navbar");
 const socialRail = document.querySelector(".social-rail");
+const paperSlide = document.querySelector(".paper-slide");
+const planeNode = document.getElementById("planeNode") || document.querySelector(".plane-path image");
+const planeTrail = document.getElementById("planeTrail");
+const dashedPath = document.getElementById("mainDashedPath") || document.querySelector(".dashed-path");
+const flightTrailPath = document.getElementById("flightTrailPath");
+const journeyStamps = document.querySelectorAll(".journey-stamp");
+const routeMaskPath = document.getElementById("routeMaskPath");
+let maskTotalLength = 0;
+
+const BASE_GROUND_BODY = "c 99 57 68 62 173 83 c 79 -7 78.8 -78.6 28.9 -103.6 c -46.9 -21.8 -104.9 5.7 -93.2 64.7 c 20.3 96.4 294.2 121.7 142 267.1 c -250.2 172.4 -170.7 233.8 47.4 243.4 c 284 5.1 476 -67.6 712.8 253.1";
+const BASE_ROUTE_D = "M -80 -1 C -39 22, 2 45, 42 68 " + BASE_GROUND_BODY;
+
+const stampMilestones = [
+    { el: document.querySelector(".stamp-1"), pos: 0.085 }, // Started Building (below airplane, before loop)
+    { el: document.querySelector(".stamp-2"), pos: 0.205 }, // Down the Rabbit Hole (upper top-right of loop)
+    { el: document.querySelector(".stamp-3"), pos: 0.400 }, // What's beyond design (at the curve point)
+    { el: document.querySelector(".stamp-4"), pos: 0.544 }, // NIFT 2024 (at the curve point)
+    { el: document.querySelector(".stamp-5"), pos: 0.600 }  // Aiming for NIFT (shifted more left)
+];
 const crumpleMap = document.getElementById("paperCrumpleMap");
-const dashedPath = document.querySelector(".dashed-path");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------------------------------------------------------------
-// Camera configuration
-// ---------------------------------------------------------------
-const ZOOM_SCALE = 3.5;
+const projectsView = document.getElementById("projectsView");
+const laptopNyay = document.getElementById("laptopNyay");
+const paperBall = document.getElementById("interactivePaperBall");
 
-// scroll progress bands: zoom in on the first stamp, hold there, then travel
-const ZOOM_IN_END = 0.12;
-const DWELL_END   = 0.22;
-
+// ---------------------------------------------------------------
+// Layout measurements (4 Stages: Home -> Journey -> Projects -> Paper Uncrumple)
+// ---------------------------------------------------------------
 const ZOOM = {
     start: 0,
     span: 1,
+    projectsStart: 0,
+    projectsEnd: 0,
+    slideStart: 0,
+    slideSpan: 1,
     width: 0,
     height: 0,
     rest: 0,
     active: false
 };
 
-// Story-order path positions (bottom of screen → top)
-// stamp-5 (AIMING FOR NIFT) → stamp-4 → stamp-3 → stamp-2 → stamp-1 (STARTED BUILDING)
-const STAMP_STOPS = [0.542, 0.498, 0.360, 0.138, 0.025];
-const STAMP_SELS  = [".stamp-5", ".stamp-4", ".stamp-3", ".stamp-2", ".stamp-1"];
-
-let svgCTM       = null;
-let pathTotalLen = 0;
-let frameOffsets = null;
-
-// ---------------------------------------------------------------
-// Measurement  (call with no camera transform on .hero)
-// ---------------------------------------------------------------
 function measureStage() {
-
-    hero.style.transform      = "";
-    hero.style.transformOrigin = "";
 
     const screen = hero.clientHeight;
 
-    ZOOM.start  = screen;
-    ZOOM.span   = Math.max(heroWrapper.offsetHeight - screen * 2, 1);
-    ZOOM.width  = hero.clientWidth;
-    ZOOM.height = screen;
+    ZOOM.height        = screen;
+    ZOOM.width         = hero.clientWidth;
+
+    // Stage 1: Home (0 - 100vh)
+    // Stage 2: About / Journey (100vh - 200vh)
+    // Stage 2.5: Airplane & Path Leaving (200vh - 285vh) -> Unhurried, noticeable exit
+    // Stage 3: Projects Showcase (290vh - 400vh)
+    // Stage 4: 3D Paper Uncrumple (395vh - 500vh)
+    ZOOM.projectsStart = screen * 2.90;
+    ZOOM.projectsEnd   = screen * 4.00;
+    ZOOM.slideStart    = screen * 3.95;
+    ZOOM.slideSpan     = Math.min(screen * 0.95, 900);
 
     const firstSnap = document.querySelector(".snap-a");
     ZOOM.rest = firstSnap
         ? firstSnap.getBoundingClientRect().top + window.scrollY
         : 0;
 
-    if (dashedPath) {
-        svgCTM       = dashedPath.getScreenCTM();
-        pathTotalLen = dashedPath.getTotalLength();
-        ZOOM.active  = !!svgCTM && pathTotalLen > 0;
+    ZOOM.active = !!paperSlide;
+
+    if (window.placeStamps) {
+        window.placeStamps();
     }
 }
 
 // ---------------------------------------------------------------
-// Path-following camera
+// Paper-slide  (3D paper ball unfolding simulation - 1 scroll trigger)
 // ---------------------------------------------------------------
 
-// Convert a position (0–1) along the SVG path to hero-relative coords
-function pathPosToHero(pos) {
-    if (!svgCTM || pathTotalLen <= 0) return null;
-    const pt = dashedPath.getPointAtLength(pathTotalLen * pos);
-    const s  = new DOMPoint(pt.x, pt.y).matrixTransform(svgCTM);
-    return { x: s.x, y: s.y };
-}
+let targetSlide = 0;
+let displaySlide = 0;
+let slideFrame = 0;
+let lastSlideTime = 0;
 
-// Map scroll progress (0–1) to a path position, with smoothstep
-// easing between each stamp stop
-function scrollToPathPos(progress) {
-    const stops = STAMP_STOPS;
-    const n     = stops.length - 1;
+let slideActive = false;
 
-    if (progress <= 0) return stops[0];
-    if (progress >= 1) return stops[n];
+function applySlide(progress) {
 
-    const seg = progress * n;
-    const idx = Math.floor(seg);
-    const t   = seg - idx;
-    const e   = t * t * (3 - 2 * t);
+    if (!paperSlide) return;
 
-    return stops[idx] + (stops[idx + 1] - stops[idx]) * e;
-}
+    progress = clamp01(progress);
 
-// Same stop-to-stop mapping, but also returns which two stops are being
-// crossed so the framing offset can be interpolated alongside the path.
-function journeySegment(travel) {
-
-    const n = STAMP_STOPS.length - 1;
-
-    if (travel <= 0) {
-        return { idx: 0, e: 0, pathPos: STAMP_STOPS[0] };
+    if (progress <= 0.001) {
+        if (slideActive) {
+            slideActive = false;
+            paperSlide.style.visibility = "hidden";
+            paperSlide.style.opacity    = "0";
+            navbar.style.opacity       = "";
+            socialRail.style.opacity   = "";
+            if (window.updatePaperUnfold) {
+                try {
+                    window.updatePaperUnfold(0);
+                } catch (e) {}
+            }
+        }
+        return;
     }
 
-    if (travel >= 1) {
-        return { idx: n - 1, e: 1, pathPos: STAMP_STOPS[n] };
+    slideActive = true;
+    paperSlide.style.visibility = "visible";
+    paperSlide.style.opacity    = String(Math.min(progress / 0.04, 1));
+
+    // Update 3D paper mesh unfolding simulation
+    if (window.updatePaperUnfold) {
+        try {
+            window.updatePaperUnfold(progress);
+        } catch (e) {}
     }
 
-    const seg = travel * n;
-    const idx = Math.floor(seg);
-    const t   = seg - idx;
-    const e   = t * t * (3 - 2 * t);
-
-    return {
-        idx,
-        e,
-        pathPos: STAMP_STOPS[idx] +
-            (STAMP_STOPS[idx + 1] - STAMP_STOPS[idx]) * e
-    };
+    // Fade navbar & social rail
+    const chromeOpacity = 1 - Math.min(progress * 4, 1);
+    navbar.style.opacity     = chromeOpacity;
+    socialRail.style.opacity = chromeOpacity;
 }
 
-// Offset from each stamp's route dot to the centre of its whole card,
-// so the camera frames the full description instead of only the dot.
-function measureFrameOffsets() {
-
-    if (hero.style.transform) return;
-
-    frameOffsets = STAMP_SELS.map((sel, i) => {
-
-        const el = document.querySelector(sel);
-        const point = pathPosToHero(STAMP_STOPS[i]);
-
-        if (!el || !point) return { x: 0, y: 0 };
-
-        const r = el.getBoundingClientRect();
-
-        return {
-            x: (r.left + r.width  / 2) - point.x,
-            y: (r.top  + r.height / 2) - point.y
-        };
-    });
-}
-
-function moveCamera() {
-
-    // zoom disabled - the hero stays at its natural scale
-    hero.style.transform       = "";
-    hero.style.transformOrigin = "";
-    navbar.style.opacity       = "";
-    socialRail.style.opacity   = "";
-    clearActiveStamp();
-}
-
-// ---------------------------------------------------------------
-// Active-stamp highlight
-// ---------------------------------------------------------------
-let activeIdx = -1;
-
-function markActiveStamp(pathPos) {
-    let best = -1, bestD = Infinity;
-    STAMP_STOPS.forEach((p, i) => {
-        const d = Math.abs(pathPos - p);
-        if (d < bestD) { bestD = d; best = i; }
-    });
-    if (bestD > 0.04) best = -1;
-    if (best === activeIdx) return;
-    clearActiveStamp();
-    activeIdx = best;
-    if (best >= 0)
-        document.querySelector(STAMP_SELS[best])?.classList.add("stamp-active");
-}
-
-function clearActiveStamp() {
-    if (activeIdx >= 0)
-        document.querySelector(STAMP_SELS[activeIdx])
-            ?.classList.remove("stamp-active");
-    activeIdx = -1;
+function setSlideTarget(progress) {
+    targetSlide = clamp01(progress);
+    displaySlide = targetSlide;
+    applySlide(displaySlide);
 }
 
 // ---------------------------------------------------------------
@@ -187,11 +143,12 @@ function clearActiveStamp() {
 // ---------------------------------------------------------------
 
 let tear = null;
-let displayTear = 0;
 let targetTear = 0;
+let displayTear = 0;
 let tearFrame = 0;
 let lastTearTime = 0;
 let resizeTimer = null;
+let cachedHeroRects = null;
 
 function clamp01(value) {
     return Math.min(Math.max(value, 0), 1);
@@ -225,17 +182,56 @@ function buildTear() {
 
     if (reduceMotion) return;
 
+    // Never rebuild or re-measure tear while scrolled!
+    // Re-measuring elements while the page is dividing corrupts coordinates and causes content to mix/enlarge.
+    if (tear && window.scrollY > 5) {
+        return;
+    }
+
+    let base, copyRect, imageRect;
+
+    if (cachedHeroRects && window.scrollY > 5) {
+        base = cachedHeroRects.base;
+        copyRect = cachedHeroRects.copyRect;
+        imageRect = cachedHeroRects.imageRect;
+    } else {
+        const wasHidden = heroCopy.style.visibility === "hidden" || heroCopy.style.display === "none";
+
+        if (wasHidden) {
+            heroCopy.style.visibility = "";
+            heroCopy.style.display = "";
+            heroImage.style.visibility = "";
+            heroImage.style.display = "";
+        }
+
+        base = hero.getBoundingClientRect();
+        copyRect = heroCopy.getBoundingClientRect();
+        imageRect = heroImage.getBoundingClientRect();
+
+        if (window.scrollY <= 5 && copyRect.width > 0 && imageRect.width > 0) {
+            cachedHeroRects = { base, copyRect, imageRect };
+        }
+
+        if (wasHidden) {
+            heroCopy.style.visibility = "hidden";
+            heroCopy.style.display = "none";
+            heroImage.style.visibility = "hidden";
+            heroImage.style.display = "none";
+        }
+    }
+
+    const cornerScrap = document.querySelector(".corner-paper-scrap");
+    const cornerRect = cornerScrap ? cornerScrap.getBoundingClientRect() : null;
+
+    const parts = [
+        { node: heroCopy, rect: copyRect },
+        { node: heroImage, rect: imageRect }
+    ];
+
     if (tear) {
         tear.root.remove();
         tear = null;
     }
-
-    const base = hero.getBoundingClientRect();
-
-    const parts = [heroCopy, heroImage].map(node => ({
-        node,
-        rect: node.getBoundingClientRect()
-    }));
 
     const edge = tearEdgePoints();
 
@@ -251,10 +247,12 @@ function buildTear() {
 
     const root = document.createElement("div");
     root.className = "paper-tear";
+    root.style.display = "none"; // Default hidden!
     root.setAttribute("aria-hidden", "true");
 
     const filters = [];
     const halves = [];
+    const lines = [];
 
     ["left", "right"].forEach(side => {
 
@@ -279,14 +277,16 @@ function buildTear() {
             clone.style.left = `${rect.left - base.left}px`;
             clone.style.top = `${rect.top - base.top}px`;
             clone.style.width = `${rect.width}px`;
+            clone.style.height = `${rect.height}px`;
             clone.style.margin = "0";
             clone.style.transform = "none";
             clone.style.opacity = "1";
             clone.style.visibility = "visible";
+            clone.style.display = "";
             clone.style.transition = "none";
             clone.style.animation = "none";
 
-            clone.querySelectorAll("img").forEach(img => {
+            clone.querySelectorAll("img, image").forEach(img => {
                 img.style.animation = "none";
             });
 
@@ -315,6 +315,7 @@ function buildTear() {
 
         svg.appendChild(line);
         half.appendChild(svg);
+        lines.push(svg);
 
         halves.push(half);
         root.appendChild(half);
@@ -326,13 +327,10 @@ function buildTear() {
 
     hero.appendChild(root);
 
-    // the fallback fade may have left a partial opacity behind
-    heroCopy.style.opacity = "";
-    heroImage.style.opacity = "";
-
     tear = {
         root,
         halves,
+        lines,
         filters,
         dust,
         active: false,
@@ -346,219 +344,782 @@ function applyTear(progress) {
 
     progress = clamp01(progress);
 
+    const heroPaperSurface = document.querySelector(".hero-paper-surface");
+    const cornerScrap = document.querySelector(".corner-paper-scrap");
+    const planePath = document.querySelector(".plane-path");
+    const journeyStamps = document.querySelectorAll(".journey-stamp");
+
     // No cloned sheet (reduced motion / very early load): plain fade.
     if (!tear) {
-
         const visible = progress <= 0.001;
-
         heroCopy.style.opacity = visible ? "" : String(1 - progress);
         heroImage.style.opacity = visible ? "" : String(1 - progress);
-
+        heroCopy.style.display = visible ? "" : "none";
+        heroImage.style.display = visible ? "" : "none";
+        if (heroPaperSurface) {
+            heroPaperSurface.style.opacity = visible ? "1" : String(1 - progress);
+            heroPaperSurface.style.display = visible ? "" : "none";
+        }
+        if (cornerScrap) {
+            cornerScrap.style.opacity = "";
+            cornerScrap.style.display = "";
+        }
+        if (planePath) {
+            planePath.style.opacity = "";
+            planePath.style.display = "";
+        }
         return;
     }
 
-    const eased = progress * progress * (3 - 2 * progress);
-    const active = progress > 0.002;
-
-    if (tear.active !== active) {
-
-        tear.active = active;
-
-        heroCopy.style.visibility = active ? "hidden" : "";
-        heroImage.style.visibility = active ? "hidden" : "";
-
-        tear.root.style.visibility = active ? "visible" : "hidden";
-    }
-
-    if (!active) {
+    if (progress <= 0.001) {
+        if (tear.active) {
+            tear.active = false;
+        }
+        if (heroPaperSurface) {
+            heroPaperSurface.style.visibility = "";
+            heroPaperSurface.style.display = "";
+            heroPaperSurface.style.opacity = "1";
+        }
+        heroCopy.style.visibility = "";
+        heroCopy.style.display = "";
+        heroImage.style.visibility = "";
+        heroImage.style.display = "";
+        if (cornerScrap) {
+            cornerScrap.style.visibility = "";
+            cornerScrap.style.display = "";
+            cornerScrap.style.transform = "";
+            cornerScrap.style.opacity = "";
+        }
+        if (planePath) {
+            planePath.style.visibility = "";
+            planePath.style.display = "";
+        }
+        journeyStamps.forEach(s => {
+            s.style.visibility = "";
+            s.style.display = "";
+        });
+        tear.root.classList.remove("is-active");
+        tear.root.style.visibility = "hidden";
         tear.root.style.opacity = "0";
+        tear.root.style.display = "none";
         return;
     }
 
+    if (progress >= 0.88) {
+        tear.active = false;
+        if (heroPaperSurface) {
+            heroPaperSurface.style.visibility = "hidden";
+            heroPaperSurface.style.display = "none";
+            heroPaperSurface.style.opacity = "0";
+        }
+        heroCopy.style.visibility = "hidden";
+        heroCopy.style.display = "none";
+        heroImage.style.visibility = "hidden";
+        heroImage.style.display = "none";
+        if (cornerScrap) {
+            cornerScrap.style.visibility = "hidden";
+            cornerScrap.style.display = "none";
+            cornerScrap.style.opacity = "0";
+            cornerScrap.style.transform = "";
+        }
+        // Tear complete - reveal underlying About journey elements
+        if (planePath) {
+            planePath.style.visibility = "";
+            planePath.style.display = "";
+        }
+        journeyStamps.forEach(s => {
+            s.style.visibility = "";
+            s.style.display = "";
+        });
+        tear.root.classList.remove("is-active");
+        tear.root.style.visibility = "hidden";
+        tear.root.style.opacity = "0";
+        tear.root.style.display = "none";
+        return;
+    }
+
+    // Actively tearing (0.001 < progress < 0.88)
+    tear.active = true;
+    if (heroPaperSurface) {
+        heroPaperSurface.style.visibility = "hidden";
+        heroPaperSurface.style.display = "none";
+        heroPaperSurface.style.opacity = "0";
+    }
+    heroCopy.style.visibility = "hidden";
+    heroCopy.style.display = "none";
+    heroImage.style.visibility = "hidden";
+    heroImage.style.display = "none";
+    if (planePath) {
+        planePath.style.visibility = "";
+        planePath.style.display = "";
+    }
+    journeyStamps.forEach(s => {
+        s.style.visibility = "";
+        s.style.display = "";
+    });
+    tear.root.classList.add("is-active");
+    tear.root.style.visibility = "visible";
     tear.root.style.opacity = "1";
+    tear.root.style.display = "block";
 
     const [left, right] = tear.halves;
 
+    // Physical paper tear kinematics
+    const rip = Math.pow(progress, 0.82);
+
     left.style.transform =
-        `translate3d(${-48 * eased}vw, ${-16 * eased}vh, 0) ` +
-        `rotate(${-11 * eased}deg) scale(${1 - 0.22 * eased})`;
+        `translate3d(${-48 * rip}vw, ${-14 * rip}vh, 0) ` +
+        `rotate(${-10 * rip}deg) scale(${1 - 0.18 * rip})`;
 
     right.style.transform =
-        `translate3d(${48 * eased}vw, ${-20 * eased}vh, 0) ` +
-        `rotate(${10 * eased}deg) scale(${1 - 0.22 * eased})`;
+        `translate3d(${48 * rip}vw, ${-18 * rip}vh, 0) ` +
+        `rotate(${9 * rip}deg) scale(${1 - 0.18 * rip})`;
 
-    const fade = 1 - clamp01((progress - 0.55) / 0.45);
+    // Smooth continuous fade as paper halves fly outward
+    const fade = 1 - clamp01((progress - 0.45) / 0.50);
 
-    left.style.opacity = String(fade);
-    right.style.opacity = String(fade);
+    left.style.opacity = fade.toFixed(3);
+    right.style.opacity = fade.toFixed(3);
 
-    // crumple the printed content itself
-    const crumple = progress > 0.004 && progress < 0.985;
+    // The top-left corner scrap divides and tears away with the left dividing paper half
+    if (cornerScrap) {
+        cornerScrap.style.visibility = "visible";
+        cornerScrap.style.display = "block";
+        cornerScrap.style.transformOrigin = "top left";
+        cornerScrap.style.transform =
+            `translate3d(${-48 * rip}vw, ${-14 * rip}vh, 0) ` +
+            `rotate(${-10 * rip}deg) scale(${1 - 0.18 * rip})`;
+        cornerScrap.style.opacity = fade.toFixed(3);
+    }
 
-    if (tear.filtered !== crumple) {
-
-        tear.filtered = crumple;
-
-        tear.filters.forEach(el => {
-            el.style.filter = crumple ? "url(#paperCrumple)" : "none";
+    // Deckle fiber edge appears instantly on tear
+    const lineOpacity = Math.min(progress / 0.04, 1).toFixed(3);
+    if (tear.lines) {
+        tear.lines.forEach(l => {
+            l.style.opacity = lineOpacity;
         });
     }
 
-    if (crumpleMap && crumple) {
-        crumpleMap.setAttribute("scale", (30 * eased).toFixed(1));
-    }
-
-    // paper fibres, crinkles and a puff of white dust
-    const grain =
-        Math.min(1, progress * 4) *
-        (1 - clamp01((progress - 0.82) / 0.18));
+    // Paper fibres, crinkles and subtle dust puff
+    const grain = Math.min(1, progress * 4) * (1 - clamp01((progress - 0.82) / 0.18));
 
     tear.root.style.setProperty("--paper-grain", (grain * 0.22).toFixed(3));
-    tear.root.style.setProperty("--paper-crinkle", (grain * 0.3).toFixed(3));
+    tear.root.style.setProperty("--paper-crinkle", (grain * 0.30).toFixed(3));
     tear.root.style.setProperty("--paper-wash", (grain * 0.045).toFixed(3));
 
-    tear.dust.style.opacity =
-        (Math.sin(Math.PI * Math.min(progress / 0.75, 1)) * 0.5).toFixed(3);
-}
-
-function animateTear(now) {
-
-    const dt = lastTearTime
-        ? Math.min(now - lastTearTime, 64)
-        : 16.7;
-
-    lastTearTime = now;
-
-    const ease = 1 - Math.pow(0.001, dt / 1000);
-
-    displayTear += (targetTear - displayTear) * ease;
-
-    if (Math.abs(targetTear - displayTear) < 0.002) {
-        displayTear = targetTear;
-    }
-
-    applyTear(displayTear);
-
-    if (displayTear !== targetTear) {
-        tearFrame = requestAnimationFrame(animateTear);
-    } else {
-        tearFrame = 0;
-        lastTearTime = 0;
+    if (tear.dust) {
+        tear.dust.style.opacity = (Math.sin(Math.PI * Math.min(progress / 0.75, 1)) * 0.45).toFixed(3);
     }
 }
 
 function setTearTarget(progress) {
-
     targetTear = clamp01(progress);
+    displayTear = targetTear;
+    applyTear(displayTear);
+}
 
-    if (reduceMotion) {
-        displayTear = targetTear;
-        applyTear(displayTear);
-        return;
+// Smooth C1-continuous flight curve matching tangent (-41, -23) with angle -150.71° at (-80, -1)
+const FLIGHT_P0 = { x: -80, y: -1 };
+const FLIGHT_P1 = { x: -237, y: -89 }; // exactly matches ground route incoming tangent
+const FLIGHT_P2 = { x: -520, y: -180 };
+const FLIGHT_P3 = { x: -1150, y: -580 };
+
+function evalBaseBezier(t) {
+    const P0 = FLIGHT_P0, P1 = FLIGHT_P1, P2 = FLIGHT_P2, P3 = FLIGHT_P3;
+    const P01  = { x: (1 - t) * P0.x + t * P1.x, y: (1 - t) * P0.y + t * P1.y };
+    const P12  = { x: (1 - t) * P1.x + t * P2.x, y: (1 - t) * P1.y + t * P2.y };
+    const P23  = { x: (1 - t) * P2.x + t * P3.x, y: (1 - t) * P2.y + t * P3.y };
+    const P012 = { x: (1 - t) * P01.x + t * P12.x, y: (1 - t) * P01.y + t * P12.y };
+    const P123 = { x: (1 - t) * P12.x + t * P23.x, y: (1 - t) * P12.y + t * P23.y };
+    const Pt   = { x: (1 - t) * P012.x + t * P123.x, y: (1 - t) * P012.y + t * P123.y };
+
+    const vx = 3 * (1 - t) * (1 - t) * (P1.x - P0.x) + 6 * (1 - t) * t * (P2.x - P1.x) + 3 * t * t * (P3.x - P2.x);
+    const vy = 3 * (1 - t) * (1 - t) * (P1.y - P0.y) + 6 * (1 - t) * t * (P2.y - P1.y) + 3 * t * t * (P3.y - P2.y);
+    return { Pt, vx, vy };
+}
+
+function evalFlightPoint(t) {
+    if (t <= 0) return { x: FLIGHT_P0.x, y: FLIGHT_P0.y };
+    const base = evalBaseBezier(t);
+    const speed = Math.hypot(base.vx, base.vy);
+    const nx = -base.vy / speed;
+    const ny =  base.vx / speed;
+
+    // Organic paper plane flight flutter:
+    // Envelope (1 - cos(t*PI))^1.5 guarantees C2 continuity at t=0
+    // (exact zero displacement, zero tangent disturbance at ground route junction)
+    const envelope = Math.pow(1 - Math.cos(t * Math.PI), 1.5) * 0.25;
+    const wobble = (Math.sin(t * Math.PI * 2.8) * 36 + Math.sin(t * Math.PI * 5.2) * 12) * envelope;
+
+    return {
+        x: base.Pt.x + nx * wobble,
+        y: base.Pt.y + ny * wobble
+    };
+}
+
+function evalFlightSpline(t) {
+    if (t <= 0.0001) {
+        return {
+            dFlight: "",
+            planePt: { x: FLIGHT_P0.x, y: FLIGHT_P0.y },
+            bank: 0
+        };
     }
 
-    if (!tearFrame) {
-        tearFrame = requestAnimationFrame(animateTear);
+    const currentPt = evalFlightPoint(t);
+
+    // Dynamic bank angle from instantaneous velocity vector
+    const dt = 0.006;
+    const tNext = Math.min(1.0, t + dt);
+    const tPrev = Math.max(0.0, t - dt);
+    const ptNext = evalFlightPoint(tNext);
+    const ptPrev = evalFlightPoint(tPrev);
+    const dx = ptNext.x - ptPrev.x;
+    const dy = ptNext.y - ptPrev.y;
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+
+    let bank = ang - (-150.71);
+    while (bank > 180) bank -= 360;
+    while (bank < -180) bank += 360;
+
+    // Trace organic flight curve with sampled polyline to perfectly match the fluttered flight path
+    const numSamples = Math.max(4, Math.round(30 * t));
+    let dFlight = `M ${FLIGHT_P0.x} ${FLIGHT_P0.y}`;
+    for (let i = 1; i < numSamples; i++) {
+        const u = (i / numSamples) * t;
+        const pt = evalFlightPoint(u);
+        dFlight += ` L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
     }
+    dFlight += ` L ${currentPt.x.toFixed(1)} ${currentPt.y.toFixed(1)}`;
+
+    return {
+        dFlight: dFlight,
+        planePt: currentPt,
+        bank: bank
+    };
 }
 
-// ---------------------------------------------------------------
-// Scroll gating  (prevent flicking past the journey overview)
-// ---------------------------------------------------------------
-let journeyReady = false;
-let stableTimer = null;
-
-// wait for the stamp dots, lines and copy to finish their reveal
-// transitions before the camera is allowed to travel the path
-const STABLE_DELAY = 1300;
-
-function waitForStableJourney() {
-
-    clearTimeout(stableTimer);
-
-    stableTimer = setTimeout(() => {
-        // make sure every dot is sitting exactly on the route first
-        window.placeStamps?.();
-        measureFrameOffsets();
-        journeyReady = true;
-    }, STABLE_DELAY);
-}
-
-function resetJourney() {
-
-    clearTimeout(stableTimer);
-    stableTimer = null;
-    journeyReady = false;
-}
-
-function gateZoom(scroll) {
-
-    // zoom disabled - scrolling is free
-    return scroll;
-}
-
-// ---------------------------------------------------------------
-// Scroll handler
-// ---------------------------------------------------------------
-window.addEventListener("scroll", () => {
-
-    const scroll = gateZoom(window.scrollY);
-
-    // the sheet is fully torn away once the journey screen is reached
+function updateScrollStages(scroll) {
     const stage = ZOOM.height || hero.clientHeight || 1;
 
+    // Hard guard whenever scrolled past home
+    if (scroll > stage * 0.92) {
+        hero.classList.add("scrolled-past-home");
+    } else {
+        hero.classList.remove("scrolled-past-home");
+    }
+
+    // Stage 1: Hero tear (0 to 100vh)
     setTearTarget((scroll - ZOOM.rest) / stage);
 
-    if (scroll > 180) {
-        if (!hero.classList.contains("about-view")) {
-            hero.classList.add("about-view");
-            waitForStableJourney();
-        }
+    // Stage 2: About view (stamps reveal once tear is clearing and flight begins)
+    if (scroll > stage * 0.80 && scroll <= stage * 2.85) {
+        hero.classList.add("about-view");
     } else {
-        if (hero.classList.contains("about-view")) {
-            hero.classList.remove("about-view");
-            resetJourney();
+        hero.classList.remove("about-view");
+    }
+
+    // Social rail contrast:
+    // - Home (<= 0.85vh): home-split (top line & title white on dark background, icons/dot black on purple paper)
+    // - Slide (Paper Unfold / Contact): dark-ink-all (all elements black ink on light paper)
+    // - About & Projects: all elements white on dark background
+    if (socialRail) {
+        const isSlide = scroll >= (ZOOM.slideStart || stage * 3.90) - 40;
+        const isHome  = scroll <= stage * 0.85;
+        if (isSlide) {
+            socialRail.classList.add("dark-ink-all");
+            socialRail.classList.remove("home-split");
+            socialRail.classList.remove("dark-ink");
+        } else if (isHome) {
+            socialRail.classList.remove("dark-ink-all");
+            socialRail.classList.add("home-split");
+            socialRail.classList.remove("dark-ink");
+        } else {
+            socialRail.classList.remove("dark-ink-all");
+            socialRail.classList.remove("home-split");
+            socialRail.classList.remove("dark-ink");
         }
     }
 
-    moveCamera(scroll);
+    // -------------------------------------------------------------
+    // Calibrated Flight & Leaving Timeline:
+    // 1. Takeoff & Flight (0.82vh to 1.70vh): Plane flies from dock to loop & milestones
+    // 2. Journey Hold (1.70vh to 1.95vh): Comfortable reading window
+    // 3. Airplane Climb & Exit (1.95vh to 2.80vh): Plane soars off screen smoothly along curved arc
+    // 4. Ground Route Dissolving (2.00vh to 2.80vh): Route dashes and stamps dissolve unhurriedly
+    // 5. Flight Trail Leaving (2.25vh to 2.85vh): Streamer trail slowly leaves the screen behind plane
+    // -------------------------------------------------------------
+    const planeStart      = stage * 0.82;
+    const planeMid        = stage * 1.70;
+    const exitStart       = stage * 1.95;
+    const exitEnd         = stage * 2.80;
+    const pathStart       = stage * 2.00;
+    const pathEnd         = stage * 2.80;
+    const trailExitStart  = stage * 2.25;
+    const trailExitEnd    = stage * 2.85;
 
-});
+    // --- Phase 1 & 2: Airplane flight along smooth curved arc ---
+    let planeProgress = 0;
+    if (scroll <= planeStart) {
+        planeProgress = 0;
+    } else if (scroll <= planeMid) {
+        // Phase 1: covers first half of the path (0 -> 0.50), visiting milestones
+        planeProgress = clamp01((scroll - planeStart) / (planeMid - planeStart)) * 0.50;
+    } else if (scroll <= exitStart) {
+        // Hold at milestone apex
+        planeProgress = 0.50;
+    } else {
+        // Phase 2: finishes second half of the path (0.50 -> 1.00) and visibly soars off screen
+        const p2 = clamp01((scroll - exitStart) / (exitEnd - exitStart));
+        planeProgress = 0.50 + 0.50 * p2;
+    }
+
+    if (planeProgress > 0.0001) {
+        const spline = evalFlightSpline(planeProgress);
+
+        // Ground route dashes stay 100% STATIONARY (never crawl or shift)
+        if (dashedPath && dashedPath.getAttribute("d") !== BASE_ROUTE_D) {
+            dashedPath.setAttribute("d", BASE_ROUTE_D);
+        }
+
+        // Flight trail extends to plane's tail
+        if (flightTrailPath) {
+            flightTrailPath.setAttribute("d", spline.dFlight);
+            flightTrailPath.style.display = "block";
+            flightTrailPath.style.strokeDashoffset = "0";
+            flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
+        }
+
+        // Airplane tracks the head of the flight path, with tail locked to Pt
+        if (planeNode) {
+            const img = planeNode.querySelector("image");
+            if (img) img.style.animationPlayState = "paused";
+
+            planeNode.setAttribute(
+                "transform",
+                `translate(${spline.planePt.x.toFixed(1)}, ${spline.planePt.y.toFixed(1)}) rotate(${spline.bank.toFixed(1)}) translate(80, 1)`
+            );
+            planeNode.style.opacity = "1";
+        }
+    } else {
+        // Resting on Home: plane docked at tail, flight trail hidden, float animation active
+        if (dashedPath && dashedPath.getAttribute("d") !== BASE_ROUTE_D) {
+            dashedPath.setAttribute("d", BASE_ROUTE_D);
+        }
+        if (flightTrailPath) {
+            flightTrailPath.setAttribute("d", "");
+            flightTrailPath.style.display = "none";
+            flightTrailPath.style.strokeDashoffset = "0";
+            flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
+        }
+        if (routeMaskPath) {
+            routeMaskPath.style.strokeDasharray = "";
+            routeMaskPath.style.strokeDashoffset = "";
+        }
+        if (planeNode) {
+            const img = planeNode.querySelector("image");
+            if (img) img.style.animationPlayState = "running";
+            planeNode.removeAttribute("transform");
+            planeNode.style.opacity = "1";
+        }
+    }
+
+    // --- Phase 2: Traced path disappears from bottom to top, stamps one by one ---
+    if (scroll > pathStart) {
+        // Part A: Ground route dissolves from bottom to top over a massive 1.05vh runway
+        const groundProgress = clamp01((scroll - pathStart) / (pathEnd - pathStart));
+        const pathRemaining = 1.0 - groundProgress;
+
+        if (routeMaskPath) {
+            const curLen = 2272;
+            const visibleLen = Math.max(0, pathRemaining * curLen);
+            routeMaskPath.style.strokeDasharray = `${visibleLen.toFixed(1)} ${curLen * 2}`;
+            routeMaskPath.style.strokeDashoffset = "0";
+        }
+
+        // Stamps disappear one by one as the disappearing bottom edge passes them (stamp-5 -> stamp-1)
+        if (stampMilestones && stampMilestones.length > 0) {
+            stampMilestones.forEach(s => {
+                if (s.el) {
+                    const t = clamp01((pathRemaining - s.pos + 0.04) / 0.08);
+                    s.el.style.opacity = (t * 0.95).toFixed(3);
+                    s.el.style.transform = `scale(${(0.80 + 0.20 * t).toFixed(2)})`;
+                    s.el.style.pointerEvents = t > 0.5 ? "auto" : "none";
+                }
+            });
+        }
+
+        // Part B: Flight trail follows the plane out of the page slowly (trailExitStart to trailExitEnd)
+        const flightProgress = clamp01((scroll - trailExitStart) / (trailExitEnd - trailExitStart));
+        if (flightTrailPath) {
+            if (flightProgress > 0.001) {
+                const fLen = 1350;
+                flightTrailPath.style.strokeDasharray = `${fLen} ${fLen * 2}`;
+                flightTrailPath.style.strokeDashoffset = `${(-flightProgress * fLen).toFixed(1)}`;
+            } else {
+                flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
+                flightTrailPath.style.strokeDashoffset = "0";
+            }
+        }
+    } else {
+        // Path is 100% visible before Phase 2: completely reset mask, trail, and stamps
+        if (routeMaskPath) {
+            routeMaskPath.style.strokeDasharray = "";
+            routeMaskPath.style.strokeDashoffset = "";
+        }
+        if (flightTrailPath) {
+            flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
+            flightTrailPath.style.strokeDashoffset = "0";
+        }
+        if (stampMilestones && stampMilestones.length > 0) {
+            stampMilestones.forEach(s => {
+                if (s.el) {
+                    s.el.style.opacity = "";
+                    s.el.style.transform = "";
+                    s.el.style.pointerEvents = "";
+                }
+            });
+        }
+    }
+
+    if (heroContent) {
+        if (scroll >= pathEnd + stage * 0.10) {
+            heroContent.style.visibility = "hidden";
+            heroContent.style.display = "none";
+            heroContent.style.pointerEvents = "none";
+        } else {
+            const wasHidden = heroContent.style.display === "none";
+            heroContent.style.visibility = "visible";
+            heroContent.style.display = "";
+            heroContent.style.pointerEvents = scroll > pathStart ? "none" : "auto";
+            if (wasHidden && window.checkStampRecompute) {
+                window.checkStampRecompute();
+            }
+        }
+    }
+
+    // Stage 3: Projects Showcase View (Chapter 02 - PROJECTS I'VE BUILT)
+    if (projectsView) {
+        const inProjectsView = scroll >= ZOOM.projectsStart && scroll < ZOOM.projectsEnd;
+        const exitingProjects = scroll < (ZOOM.projectsStart - 80) || scroll >= (ZOOM.projectsEnd + 80);
+
+        if (inProjectsView) {
+            projectsView.classList.add("projects-active");
+            hero.classList.add("projects-view-active");
+            projectsView.style.opacity = "1";
+            projectsView.style.visibility = "visible";
+            projectsView.style.display = "block";
+            projectsView.style.pointerEvents = "auto";
+
+            // Guarantee first page elements are completely hidden
+            heroCopy.style.visibility = "hidden";
+            heroCopy.style.display = "none";
+            heroImage.style.visibility = "hidden";
+            heroImage.style.display = "none";
+
+            // Trigger rolling paper ball when entering stage 3 - snappy and responsive!
+            if (scroll >= ZOOM.projectsStart + 10) {
+                if (paperBallState === "perched" && !ballRollDelayTimer) {
+                    ballRollDelayTimer = setTimeout(() => {
+                        triggerPaperBallRoll();
+                    }, 350);
+                }
+            }
+        } else if (exitingProjects) {
+            projectsView.classList.remove("projects-active");
+            hero.classList.remove("projects-view-active");
+            projectsView.style.opacity = "";
+            projectsView.style.visibility = "";
+            projectsView.style.display = "";
+            projectsView.style.pointerEvents = "";
+
+            if (scroll >= ZOOM.projectsEnd) {
+                heroCopy.style.visibility = "hidden";
+                heroCopy.style.display = "none";
+                heroImage.style.visibility = "hidden";
+                heroImage.style.display = "none";
+            }
+
+            if (scroll < ZOOM.projectsStart - 80) {
+                resetPaperBall();
+            }
+        }
+    }
+
+    // Stage 4: 3D Paper Ball Uncrumple simulation (Fourth Scroll, starting at slideStart)
+    setSlideTarget((scroll - ZOOM.slideStart) / ZOOM.slideSpan);
+}
+
+// ---------------------------------------------------------------
+// Interactive Paper Ball Physics & Navigation
+// ---------------------------------------------------------------
+let paperBallState = "perched"; // "perched" | "rolling" | "falling" | "bouncing" | "unfolding"
+let ballRollDelayTimer = null;
+let ballStepTimer = null;
+let ballFallTimer = null;
+let nyayTiltTimer = null;
+
+function triggerPaperBallRoll() {
+    if (paperBallState !== "perched") return;
+    paperBallState = "rolling";
+
+    const ball = document.getElementById("interactivePaperBall");
+    const nyay = document.getElementById("laptopNyay");
+
+    clearTimeout(ballRollDelayTimer);
+    clearTimeout(ballStepTimer);
+    clearTimeout(ballFallTimer);
+    clearTimeout(nyayTiltTimer);
+    ballRollDelayTimer = null;
+    ballStepTimer = null;
+    ballFallTimer = null;
+    nyayTiltTimer = null;
+
+    if (nyay) {
+        nyay.classList.add("tilting");
+        // Spring back up naturally once ball leaves the corner
+        nyayTiltTimer = setTimeout(() => {
+            if (nyay) nyay.classList.remove("tilting");
+        }, 580);
+    }
+    if (ball) {
+        ball.classList.remove("perched", "is-falling", "is-bouncing", "is-unfolding");
+        ball.classList.add("is-rolling");
+    }
+
+    // 0.52s roll down the tilted ramp
+    ballStepTimer = setTimeout(() => {
+        if (paperBallState !== "rolling") return;
+        paperBallState = "falling";
+        if (ball) {
+            ball.classList.remove("is-rolling");
+            ball.classList.add("is-falling");
+        }
+
+        // 0.65s continuous parabolic gravity arc to floor
+        ballFallTimer = setTimeout(() => {
+            if (paperBallState !== "falling") return;
+            paperBallState = "bouncing";
+            if (ball) {
+                ball.classList.remove("is-falling");
+                ball.classList.add("is-bouncing");
+            }
+        }, 650);
+    }, 520);
+}
+
+function resetPaperBall() {
+    clearTimeout(ballRollDelayTimer);
+    clearTimeout(ballStepTimer);
+    clearTimeout(ballFallTimer);
+    clearTimeout(nyayTiltTimer);
+    ballRollDelayTimer = null;
+    ballStepTimer = null;
+    ballFallTimer = null;
+    nyayTiltTimer = null;
+    if (paperBallState === "perched") return;
+    paperBallState = "perched";
+    const ball = document.getElementById("interactivePaperBall");
+    const nyay = document.getElementById("laptopNyay");
+    if (nyay) nyay.classList.remove("tilting");
+    if (ball) {
+        ball.classList.remove("is-rolling", "is-falling", "is-bouncing", "is-unfolding");
+        ball.classList.add("perched");
+    }
+}
+
+function setupPaperBallInteractions() {
+    const ball = document.getElementById("interactivePaperBall");
+    if (ball) {
+        ball.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (paperBallState === "perched") {
+                triggerPaperBallRoll();
+                return;
+            }
+
+            if (paperBallState === "unfolding") return;
+            paperBallState = "unfolding";
+
+            ball.classList.remove("is-bouncing");
+            ball.classList.add("is-unfolding");
+
+            // Smoothly launch the 3D paper unfold transition
+            const targetY = ZOOM.slideStart + ZOOM.slideSpan * 0.95;
+            window.scrollTo({
+                top: targetY,
+                behavior: "smooth"
+            });
+
+            // Trigger uncrumple directly
+            if (window.updatePaperUnfold) {
+                let p = 0;
+                const anim = setInterval(() => {
+                    p += 0.04;
+                    if (p >= 1) {
+                        p = 1;
+                        clearInterval(anim);
+                    }
+                    applySlide(p);
+                }, 16);
+            }
+        });
+    }
+
+    // Interactive project list items in sidebar & 3D laptop spotlight
+    const navItems = document.querySelectorAll(".project-nav-item");
+    const stageEl = document.querySelector(".projects-stage");
+
+    function setFocusProject(projName) {
+        if (!stageEl) return;
+        stageEl.classList.remove("focus-krishi", "focus-nyay", "focus-bio");
+        if (projName) {
+            stageEl.classList.add(`focus-${projName}`);
+        }
+    }
+
+    navItems.forEach(item => {
+        const proj = item.getAttribute("data-proj");
+
+        item.addEventListener("mouseenter", () => {
+            setFocusProject(proj);
+        });
+
+        item.addEventListener("mouseleave", () => {
+            setFocusProject(null);
+        });
+
+        item.addEventListener("click", () => {
+            navItems.forEach(n => n.classList.remove("active"));
+            item.classList.add("active");
+            setFocusProject(proj);
+        });
+    });
+}
+
+// ---------------------------------------------------------------
+// Native High-Performance 60fps/120fps RAF Scroll Handler
+// (Pure native browser physics, zero scrolljacking, zero lag)
+// ---------------------------------------------------------------
+let scrollTicking = false;
+
+window.addEventListener("scroll", () => {
+    if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(() => {
+            updateScrollStages(window.scrollY);
+            scrollTicking = false;
+        });
+    }
+}, { passive: true });
 
 // ---------------------------------------------------------------
 // Init
 // ---------------------------------------------------------------
-measureStage();
-moveCamera(window.scrollY);
-
-window.addEventListener("load", () => {
+function syncScrollAndTear() {
     measureStage();
-    journeyReady = window.scrollY > ZOOM.start * 0.5;
+    const stage = ZOOM.height || hero.clientHeight || 1;
+    const initialTear = clamp01((window.scrollY - ZOOM.rest) / stage);
 
-    if (window.scrollY > 180) {
-        hero.classList.add("about-view");
-        if (!journeyReady) waitForStableJourney();
+    // Synchronize tear display directly with current scroll so it never animates from 0 on refresh
+    targetTear = initialTear;
+    displayTear = initialTear;
+
+    if (initialTear >= 0.05) {
+        const heroPaperSurface = document.querySelector(".hero-paper-surface");
+        if (heroPaperSurface) {
+            heroPaperSurface.style.visibility = "hidden";
+            heroPaperSurface.style.display = "none";
+            heroPaperSurface.style.opacity = "0";
+        }
+        heroCopy.style.visibility = "hidden";
+        heroCopy.style.display = "none";
+        heroImage.style.visibility = "hidden";
+        heroImage.style.display = "none";
+        const cornerScrap = document.querySelector(".corner-paper-scrap");
+        if (cornerScrap) {
+            cornerScrap.style.visibility = "hidden";
+            cornerScrap.style.display = "none";
+            cornerScrap.style.opacity = "0";
+            cornerScrap.style.transform = "";
+        }
     }
 
-    moveCamera(window.scrollY);
-
-    const stage = ZOOM.height || hero.clientHeight || 1;
-
-    displayTear = clamp01((window.scrollY - ZOOM.rest) / stage);
-    targetTear = displayTear;
+    if (socialRail) {
+        const isSlide = window.scrollY >= (ZOOM.slideStart || stage * 3.90) - 40;
+        const isHome  = window.scrollY <= stage * 0.85;
+        if (isSlide) {
+            socialRail.classList.add("dark-ink-all");
+            socialRail.classList.remove("home-split");
+            socialRail.classList.remove("dark-ink");
+        } else if (isHome) {
+            socialRail.classList.remove("dark-ink-all");
+            socialRail.classList.add("home-split");
+            socialRail.classList.remove("dark-ink");
+        } else {
+            socialRail.classList.remove("dark-ink-all");
+            socialRail.classList.remove("home-split");
+            socialRail.classList.remove("dark-ink");
+        }
+    }
 
     buildTear();
+    applyTear(displayTear);
+    updateScrollStages(window.scrollY);
+    if (window.placeStamps) {
+        window.placeStamps();
+    }
+}
 
-    // text can reflow once the webfonts arrive, so re-measure after
+function setupStampInteractions() {
+    document.querySelectorAll(".journey-stamp").forEach(stamp => {
+        stamp.addEventListener("click", e => {
+            e.stopPropagation();
+            const wasExpanded = stamp.classList.contains("is-expanded");
+            document.querySelectorAll(".journey-stamp").forEach(s => s.classList.remove("is-expanded"));
+            if (!wasExpanded) {
+                stamp.classList.add("is-expanded");
+            }
+        });
+    });
+}
+
+syncScrollAndTear();
+setupPaperBallInteractions();
+setupStampInteractions();
+
+window.addEventListener("load", () => {
+    // Only re-measure and re-sync if sitting at the top of the page
+    if (window.scrollY <= 5) {
+        cachedHeroRects = null;
+        syncScrollAndTear();
+    }
+
+    // text can reflow once webfonts arrive, so re-measure ONLY if at the top
     if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(buildTear);
+        document.fonts.ready.then(() => {
+            if (window.scrollY <= 5) {
+                cachedHeroRects = null;
+                syncScrollAndTear();
+            }
+        });
     }
 });
 
 window.addEventListener("resize", () => {
     measureStage();
-    moveCamera(window.scrollY);
+    updateScrollStages(window.scrollY);
 
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(buildTear, 180);
+    // Only rebuild tear on resize if at the top of the page
+    if (window.scrollY <= 5) {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (window.scrollY <= 5) {
+                cachedHeroRects = null;
+                buildTear();
+            }
+        }, 180);
+    }
 });
