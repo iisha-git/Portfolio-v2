@@ -195,13 +195,13 @@ function buildTear() {
         copyRect = cachedHeroRects.copyRect;
         imageRect = cachedHeroRects.imageRect;
     } else {
-        const wasHidden = heroCopy.style.visibility === "hidden" || heroCopy.style.display === "none";
+        const wasHidden = heroCopy.style.visibility === "hidden" || heroCopy.style.opacity === "0";
 
         if (wasHidden) {
-            heroCopy.style.visibility = "";
-            heroCopy.style.display = "";
-            heroImage.style.visibility = "";
-            heroImage.style.display = "";
+            heroCopy.style.visibility = "visible";
+            heroCopy.style.opacity = "1";
+            heroImage.style.visibility = "visible";
+            heroImage.style.opacity = "1";
         }
 
         base = hero.getBoundingClientRect();
@@ -214,9 +214,9 @@ function buildTear() {
 
         if (wasHidden) {
             heroCopy.style.visibility = "hidden";
-            heroCopy.style.display = "none";
+            heroCopy.style.opacity = "0";
             heroImage.style.visibility = "hidden";
-            heroImage.style.display = "none";
+            heroImage.style.opacity = "0";
         }
     }
 
@@ -247,7 +247,8 @@ function buildTear() {
 
     const root = document.createElement("div");
     root.className = "paper-tear";
-    root.style.display = "none"; // Default hidden!
+    root.style.visibility = "hidden";
+    root.style.opacity = "0";
     root.setAttribute("aria-hidden", "true");
 
     const filters = [];
@@ -351,57 +352,53 @@ function applyTear(progress) {
 
     // No cloned sheet (reduced motion / very early load): plain fade.
     if (!tear) {
-        const visible = progress <= 0.001;
-        heroCopy.style.opacity = visible ? "" : String(1 - progress);
-        heroImage.style.opacity = visible ? "" : String(1 - progress);
-        heroCopy.style.display = visible ? "" : "none";
-        heroImage.style.display = visible ? "" : "none";
+        const visible = progress <= 0.002;
+        heroCopy.style.opacity = visible ? "1" : String(1 - progress);
+        heroImage.style.opacity = visible ? "1" : String(1 - progress);
+        heroCopy.style.visibility = visible ? "visible" : "hidden";
+        heroImage.style.visibility = visible ? "visible" : "hidden";
         if (heroPaperSurface) {
             heroPaperSurface.style.opacity = visible ? "1" : String(1 - progress);
-            heroPaperSurface.style.display = visible ? "" : "none";
+            heroPaperSurface.style.visibility = visible ? "visible" : "hidden";
         }
         if (cornerScrap) {
-            cornerScrap.style.opacity = "";
-            cornerScrap.style.display = "";
-        }
-        if (planePath) {
-            planePath.style.opacity = "";
-            planePath.style.display = "";
+            cornerScrap.style.opacity = visible ? "1" : String(1 - progress);
+            cornerScrap.style.visibility = visible ? "visible" : "hidden";
         }
         return;
     }
 
-    if (progress <= 0.001) {
-        if (tear.active) {
-            tear.active = false;
-        }
+    if (progress <= 0.002) {
+        tear.active = false;
         if (heroPaperSurface) {
-            heroPaperSurface.style.visibility = "";
-            heroPaperSurface.style.display = "";
+            heroPaperSurface.style.visibility = "visible";
             heroPaperSurface.style.opacity = "1";
         }
-        heroCopy.style.visibility = "";
-        heroCopy.style.display = "";
-        heroImage.style.visibility = "";
-        heroImage.style.display = "";
+        heroCopy.style.visibility = "visible";
+        heroCopy.style.opacity = "1";
+        heroCopy.style.pointerEvents = "";
+
+        heroImage.style.visibility = "visible";
+        heroImage.style.opacity = "1";
+        heroImage.style.pointerEvents = "";
+
         if (cornerScrap) {
-            cornerScrap.style.visibility = "";
-            cornerScrap.style.display = "";
+            cornerScrap.style.visibility = "visible";
+            cornerScrap.style.opacity = "1";
             cornerScrap.style.transform = "";
-            cornerScrap.style.opacity = "";
         }
         if (planePath) {
             planePath.style.visibility = "";
-            planePath.style.display = "";
+            planePath.style.opacity = "";
         }
         journeyStamps.forEach(s => {
             s.style.visibility = "";
-            s.style.display = "";
+            s.style.opacity = "";
         });
         tear.root.classList.remove("is-active");
         tear.root.style.visibility = "hidden";
         tear.root.style.opacity = "0";
-        tear.root.style.display = "none";
+        tear.root.style.pointerEvents = "none";
         return;
     }
 
@@ -409,58 +406,63 @@ function applyTear(progress) {
         tear.active = false;
         if (heroPaperSurface) {
             heroPaperSurface.style.visibility = "hidden";
-            heroPaperSurface.style.display = "none";
             heroPaperSurface.style.opacity = "0";
         }
         heroCopy.style.visibility = "hidden";
-        heroCopy.style.display = "none";
+        heroCopy.style.opacity = "0";
+        heroCopy.style.pointerEvents = "none";
+
         heroImage.style.visibility = "hidden";
-        heroImage.style.display = "none";
+        heroImage.style.opacity = "0";
+        heroImage.style.pointerEvents = "none";
+
         if (cornerScrap) {
             cornerScrap.style.visibility = "hidden";
-            cornerScrap.style.display = "none";
             cornerScrap.style.opacity = "0";
             cornerScrap.style.transform = "";
         }
         // Tear complete - reveal underlying About journey elements
         if (planePath) {
             planePath.style.visibility = "";
-            planePath.style.display = "";
+            planePath.style.opacity = "1";
         }
         journeyStamps.forEach(s => {
             s.style.visibility = "";
-            s.style.display = "";
+            s.style.opacity = "1";
         });
         tear.root.classList.remove("is-active");
         tear.root.style.visibility = "hidden";
         tear.root.style.opacity = "0";
-        tear.root.style.display = "none";
+        tear.root.style.pointerEvents = "none";
         return;
     }
 
-    // Actively tearing (0.001 < progress < 0.88)
+    // Actively tearing (0.002 < progress < 0.88)
     tear.active = true;
     if (heroPaperSurface) {
         heroPaperSurface.style.visibility = "hidden";
-        heroPaperSurface.style.display = "none";
         heroPaperSurface.style.opacity = "0";
     }
     heroCopy.style.visibility = "hidden";
-    heroCopy.style.display = "none";
+    heroCopy.style.opacity = "0";
+    heroCopy.style.pointerEvents = "none";
+
     heroImage.style.visibility = "hidden";
-    heroImage.style.display = "none";
+    heroImage.style.opacity = "0";
+    heroImage.style.pointerEvents = "none";
+
     if (planePath) {
         planePath.style.visibility = "";
-        planePath.style.display = "";
+        planePath.style.opacity = "1";
     }
     journeyStamps.forEach(s => {
         s.style.visibility = "";
-        s.style.display = "";
+        s.style.opacity = "1";
     });
     tear.root.classList.add("is-active");
     tear.root.style.visibility = "visible";
     tear.root.style.opacity = "1";
-    tear.root.style.display = "block";
+    tear.root.style.pointerEvents = "none";
 
     const [left, right] = tear.halves;
 
@@ -484,7 +486,6 @@ function applyTear(progress) {
     // The top-left corner scrap divides and tears away with the left dividing paper half
     if (cornerScrap) {
         cornerScrap.style.visibility = "visible";
-        cornerScrap.style.display = "block";
         cornerScrap.style.transformOrigin = "top left";
         cornerScrap.style.transform =
             `translate3d(${-48 * rip}vw, ${-14 * rip}vh, 0) ` +
@@ -512,10 +513,42 @@ function applyTear(progress) {
     }
 }
 
+function animateTear(now) {
+    if (!lastTearTime) lastTearTime = now;
+    const dt = Math.min(now - lastTearTime, 64);
+    lastTearTime = now;
+
+    // High performance smooth exponential easing (~0.18 decay per 16ms frame)
+    const ease = 1 - Math.pow(0.001, dt / 1000);
+    displayTear += (targetTear - displayTear) * ease;
+
+    if (Math.abs(targetTear - displayTear) < 0.001) {
+        displayTear = targetTear;
+    }
+
+    applyTear(displayTear);
+
+    if (displayTear !== targetTear) {
+        tearFrame = requestAnimationFrame(animateTear);
+    } else {
+        tearFrame = 0;
+        lastTearTime = 0;
+    }
+}
+
 function setTearTarget(progress) {
     targetTear = clamp01(progress);
-    displayTear = targetTear;
-    applyTear(displayTear);
+
+    if (reduceMotion) {
+        displayTear = targetTear;
+        applyTear(displayTear);
+        return;
+    }
+
+    if (!tearFrame) {
+        lastTearTime = performance.now();
+        tearFrame = requestAnimationFrame(animateTear);
+    }
 }
 
 // Smooth C1-continuous flight curve matching tangent (-41, -23) with angle -150.71° at (-80, -1)
@@ -1031,17 +1064,15 @@ function syncScrollAndTear() {
         const heroPaperSurface = document.querySelector(".hero-paper-surface");
         if (heroPaperSurface) {
             heroPaperSurface.style.visibility = "hidden";
-            heroPaperSurface.style.display = "none";
             heroPaperSurface.style.opacity = "0";
         }
         heroCopy.style.visibility = "hidden";
-        heroCopy.style.display = "none";
+        heroCopy.style.opacity = "0";
         heroImage.style.visibility = "hidden";
-        heroImage.style.display = "none";
+        heroImage.style.opacity = "0";
         const cornerScrap = document.querySelector(".corner-paper-scrap");
         if (cornerScrap) {
             cornerScrap.style.visibility = "hidden";
-            cornerScrap.style.display = "none";
             cornerScrap.style.opacity = "0";
             cornerScrap.style.transform = "";
         }
