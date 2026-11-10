@@ -1,524 +1,911 @@
-body{
+body {
     font-family: 'Oswald', sans-serif;
-    background:#0d0d0d;
-    color:#f5f5f5;
-    overflow-x:hidden;
+    background: #0d0d0d;
+    color: #f5f5f5;
+    overflow-x: hidden;
     min-height: auto;
+}
+
+a {
+    text-decoration: none;
 }
 
 
 .small-line,
 .design-line,
-.build-line{
-    font-family:'Oswald', sans-serif;
+.build-line {
+    font-family: 'Oswald', sans-serif;
 }
 
-.navbar{
+.navbar {
     text-transform: uppercase;
-    position:absolute;
-    top:20px;
-    left:8%;
-    right:8%;
-    
+    position: absolute;
+    top: 20px;
+    left: 8%;
+    right: 8%;
 
-    display:flex;
-    align-items:center;
 
-    z-index:100;
+    display: flex;
+    align-items: center;
+
+    z-index: 100;
 }
 
-.logo{
+.logo {
     justify-self: start;
 }
 
-.logo img{
+.logo img {
 
-    height:70px;
-    width:auto;
+    height: 70px;
+    width: auto;
     bottom: 0px;
 }
 
-.nav-links{
-    display:flex;
-    gap:4rem;
+.nav-links {
+    display: flex;
+    gap: 4rem;
 
-    list-style:none;
+    list-style: none;
     margin-left: auto;
 }
 
 
-.nav-links a{
-    position:relative;
-    text-decoration:none;
-    color:#f5f5f5;
-    font-size:1rem;
-    letter-spacing:1px;
-    transition:.3s ease;
+.nav-links a {
+    position: relative;
+    text-decoration: none;
+    color: #f5f5f5;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    transition: .3s ease;
 }
 
-.nav-links a:hover{
-    color:#C4B5FD;
+.nav-links a:hover {
+    color: #C4B5FD;
 }
 
-.nav-links a::after{
-    content:"";
-    position:absolute;
+.nav-links a::after {
+    content: "";
+    position: absolute;
 
-    left:-2px;
-    bottom:-12px;
+    left: -2px;
+    bottom: -12px;
 
-    width:110%;
-    height:12px;
+    width: 110%;
+    height: 12px;
 
-    background:url("assets/scribble.svg") no-repeat center;
-    background-size:100% 100%;
+    background: url("assets/scribble.svg") no-repeat center;
+    background-size: 100% 100%;
 
-    opacity:0;
-    transition:.25s ease;
+    opacity: 0;
+    transition: .25s ease;
 }
 
-.nav-links a:hover::after{
-    opacity:1;
+.nav-links a:hover::after {
+    opacity: 1;
 }
 
 
 
-@media(max-width:768px){
-    .menu-toggle{
-        display:block;
+@media(max-width:768px) {
+    .menu-toggle {
+        display: block;
     }
 
-    .nav-links{
-        display:none;
-    }
-}
-
-@media(max-width:768px){
-
-    .navbar{
-        left:5%;
-        right:5%;
-    }
-
-    .logo img{
-        height:50px;
-    }
-
-    .menu-toggle{
-        display:block;
-        margin-left:auto;
-        color:#f5f5f5;
-    }
-
-    .nav-links{
-        display:none;
+    .nav-links {
+        display: none;
     }
 }
 
-.small-line{
-    font-size:2.8rem;
+@media(max-width:768px) {
+
+    .navbar {
+        left: 5%;
+        right: 5%;
+    }
+
+    .logo img {
+        height: 50px;
+    }
+
+    .menu-toggle {
+        display: block;
+        margin-left: auto;
+        color: #f5f5f5;
+    }
+
+    .nav-links {
+        display: none;
+    }
+}
+
+.small-line {
+    font-size: 2.8rem;
     margin-bottom: 8px;
-    line-height:1;
-    margin:0;
-    font-weight:700;
+    line-height: 1;
+    margin: 0;
+    font-weight: 700;
 }
 
-.design-word-wrap{
-    margin:10px 0 0px;
+.design-word-wrap {
+    margin: 10px 0 0px;
 }
 
-.design-word{
+.design-word {
     position: relative;
     left: -40px;
-    width:450px;
-    max-width:580px;
-    height:auto;
-    display:block;
-}
-.design-highlight{
-    position:relative;
-    display:inline-block;
-}
-.design-highlight img{
-    position:absolute;
-
-    left:-9.4%;
-    top:-38%;
-
-    width:100%;
-    height:auto;
-
-    pointer-events:none;
-
-    z-index:-1;
+    width: 450px;
+    max-width: 580px;
+    height: auto;
+    display: block;
 }
 
-.second-line{
+.design-highlight {
+    position: relative;
+    display: inline-block;
+}
+
+.design-highlight img {
+    position: absolute;
+
+    left: -9.4%;
+    top: -38%;
+
+    width: 100%;
+    height: auto;
+
+    pointer-events: none;
+
+    z-index: -1;
+}
+
+.second-line {
     margin-top: 25px;
 }
 
-.build-line{
+.build-line {
     font-size: 9rem;
     letter-spacing: -3px;
-    margin:0;
-    line-height:.85;
+    margin: 0;
+    line-height: .85;
 }
 
 
-.design-line span{
-    color:#C4B5FD;
+.design-line span {
+    color: #C4B5FD;
 }
 
-.menu-toggle{
-    justify-self:end;
-    font-size:1.8rem;
-    cursor:pointer;
+.menu-toggle {
+    justify-self: end;
+    font-size: 1.8rem;
+    cursor: pointer;
 }
 
-.menu-toggle{
-    display:none;
+.menu-toggle {
+    display: none;
 }
 
 
 /* HERO */
 
-.hero{
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 8%;
-    position:sticky;
+.hero {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8%;
+    position: sticky;
     top: 0;
-    overflow:hidden;
-
+    overflow: hidden;
+    background-color: #0d0d0d;
 }
 
-.hero-wrapper{
-    height:300vh;
-    position:relative;
+.hero-wrapper {
+    height: 500vh;
+    position: relative;
 }
 
-html{
-    scroll-snap-type:none;
+html {
+    scroll-snap-type: none;
+    scroll-behavior: smooth;
 }
 
-/* one scroll step per stage: hero, journey, camera push-in */
-.snap-point{
-    position:absolute;
-    left:0;
+/* 4 scroll stages: hero (home), journey (about), projects (chapter 02), paper uncrumple */
+.snap-point {
+    position: absolute;
+    left: 0;
 
-    width:100%;
-    height:100vh;
+    width: 100%;
+    height: 100vh;
 
-    pointer-events:none;
+    pointer-events: none;
 
-    scroll-snap-align:start;
-    scroll-snap-stop:always;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
-.snap-a{
-    top:0;
+.snap-a {
+    top: 0;
 }
 
-.snap-b{
-    top:100vh;
+.snap-b {
+    top: 100vh;
 }
 
-.snap-c{
-    top:200vh;
+.snap-c {
+    top: 300vh;
 }
 
-.hero-heading{
-    display:flex;
-    flex-direction:column;
+.snap-d {
+    top: 420vh;
 }
 
-.hero-content{
-    width:auto;
-    z-index:2;
-    margin-top:60px;
+.hero-heading {
+    display: flex;
+    flex-direction: column;
 }
 
-.hero-tag{
-    font-family: 'Anton',sans-serif !important; 
-    color:#B38eff;
+.hero-content {
+    width: auto;
+    z-index: 2;
+    margin-top: 60px;
+}
+
+.hero-tag {
+    font-family: 'Anton', sans-serif !important;
+    color: #B38eff;
     display: block;
     width: max-content;
-    font-size:1rem;
-    letter-spacing:2px;
+    font-size: 1rem;
+    letter-spacing: 2px;
     text-transform: uppercase;
     font-size: .95rem;
-    margin-bottom:20px;
+    margin-bottom: 20px;
 }
 
-.hero-title{
-    font-size:7rem;
-    line-height:.9;
-    font-weight:800;
-    margin:0;
+.hero-title {
+    font-size: 7rem;
+    line-height: .9;
+    font-weight: 800;
+    margin: 0;
 }
 
-.hero-title.second{
-    margin-top:1rem;
+.hero-title.second {
+    margin-top: 1rem;
 }
 
 
-.hero-image{
-    position:relative;
-    width:45%;
-    display:flex;
-    justify-content:flex-end;
-    align-items:flex-end;
-    align-self:flex-end;
-    z-index:2;
+.hero-image {
+    position: relative;
+    width: 45%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    align-self: flex-end;
+    z-index: 2;
 }
 
-.hero-image img{
-    
-    height:82vh;
-    width:auto;
-    object-fit:contain;
+.hero-image-frame {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 82vh;
+    width: auto;
 }
 
-.hero-buttons{
-    display:flex;
-    gap:1rem;
-    margin-top:3rem;
+.hero-image-frame>img.hero-portrait,
+.hero-portrait {
+    position: relative;
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    z-index: 2;
+}
+
+/* Torn Purple Paper Cutout Backing (Physical collage layer beneath portrait) */
+.paper-cutout-backing {
+    position: absolute;
+    bottom: 0;
+    right: -14vw;
+    width: calc(100% + 24vw);
+    max-width: none;
+    transform: none;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(-8px 10px 24px rgba(0, 0, 0, 0.65)) drop-shadow(-2px 2px 6px rgba(0, 0, 0, 0.4));
+    will-change: transform;
+}
+
+.paper-cutout-backing img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+}
+
+/* Top Left Corner Paper Scrap (Handmade scrapbook collage element) */
+.corner-paper-scrap {
+    position: fixed;
+    top: -2px;
+    left: -2px;
+    width: 200px;
+    height: auto;
+    z-index: 95;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(3px 4px 14px rgba(0, 0, 0, 0.7));
+    will-change: transform;
+}
+
+.corner-paper-scrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .corner-paper-scrap {
+        width: 130px;
+    }
+}
+
+/* ===============================================================
+   HEAD DOODLE CONSTELLATION (Hand-drawn thought animations over head)
+   =============================================================== */
+.head-doodles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: visible;
+}
+
+/* Dashed Orbit Arch - Pure Circular Round Halo (round, not curve) */
+.doodle-arch {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+}
+
+/* Base Doodle Item (Matte Hand-Drawn Chalk, No Glow) */
+.doodle-item {
+    position: absolute;
+    pointer-events: auto;
+    cursor: pointer;
+    will-change: transform;
+    transition: transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), filter .25s ease;
+}
+
+.doodle-item svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+}
+
+/* 1. Burst Rays - Lower Left along round halo (195 deg) */
+.doodle-burst {
+    top: 39.7%;
+    left: 17.1%;
+    width: 5.0vh;
+    max-width: 50px;
+    min-width: 30px;
+    transform: translate(-50%, -50%) rotate(-16deg);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+    animation: burstPulse 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes burstPulse {
+    0% {
+        transform: translate(-50%, -50%) rotate(-16deg) scale(0.95);
+        opacity: 0.85;
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(-12deg) scale(1.05);
+        opacity: 1;
+    }
+}
+
+/* 2. Code Card </> - Mid-Lower Left along round halo (160 deg) */
+.doodle-code {
+    top: 25.0%;
+    left: 17.9%;
+    width: 6.8vh;
+    max-width: 66px;
+    min-width: 42px;
+    transform: translate(-50%, -50%) rotate(-24deg);
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.75));
+    animation: codeFloat 5s ease-in-out infinite alternate;
+}
+
+@keyframes codeFloat {
+    0% {
+        transform: translate(-50%, -50%) rotate(-24deg) translateY(0);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(-20deg) translateY(-5px);
+    }
+}
+
+/* 3. Hand-Drawn Pencil - Upper Left along round halo (125 deg) */
+.doodle-pencil {
+    top: 13.3%;
+    left: 29.9%;
+    width: 5.6vh;
+    max-width: 54px;
+    min-width: 36px;
+    transform: translate(-50%, -50%) rotate(-16deg);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.75));
+    animation: pencilDrafting 4.5s ease-in-out infinite alternate 0.3s;
+}
+
+@keyframes pencilDrafting {
+    0% {
+        transform: translate(-50%, -50%) translateY(0) rotate(-16deg);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) translateY(-3px) rotate(-12deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) translateY(2px) rotate(-19deg);
+    }
+}
+
+/* 4. Idea Lightbulb - Crown Apex Center of Round Arch (90 deg) */
+.doodle-bulb {
+    top: 8.8%;
+    left: 48.6%;
+    width: 6.8vh;
+    max-width: 66px;
+    min-width: 44px;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.75));
+    animation: bulbGentleFloat 4s ease-in-out infinite alternate;
+}
+
+@keyframes bulbGentleFloat {
+    0% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) translateY(-4px);
+    }
+}
+
+/* 5. Hand-Drawn Laptop - Upper Right along round halo (55 deg) */
+.doodle-laptop {
+    top: 13.3%;
+    left: 67.3%;
+    width: 7.8vh;
+    max-width: 76px;
+    min-width: 48px;
+    transform: translate(-50%, -50%) rotate(18deg);
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.75));
+    animation: laptopDoodleFloat 5.6s ease-in-out infinite alternate 0.5s;
+}
+
+@keyframes laptopDoodleFloat {
+    0% {
+        transform: translate(-50%, -50%) rotate(18deg) translateY(0);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(15deg) translateY(-5px);
+    }
+}
+
+/* 6. Notepad Checklist - Mid-Lower Right along round halo (20 deg) */
+.doodle-checklist {
+    top: 25.0%;
+    left: 79.3%;
+    width: 4.8vh;
+    max-width: 48px;
+    min-width: 32px;
+    transform: translate(-50%, -50%) rotate(16deg);
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.75));
+    animation: checklistFloat 5s ease-in-out infinite alternate 1s;
+}
+
+@keyframes checklistFloat {
+    0% {
+        transform: translate(-50%, -50%) rotate(16deg) translateY(0);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(19deg) translateY(-4px);
+    }
+}
+
+/* 7. Sparkle Star - Lower Right along round halo (-15 deg) */
+.doodle-sparkle {
+    top: 39.7%;
+    left: 80.1%;
+    width: 4.2vh;
+    max-width: 42px;
+    min-width: 26px;
+    transform: translate(-50%, -50%) rotate(10deg);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+    animation: starTwinkle 3s ease-in-out infinite alternate;
+}
+
+@keyframes starTwinkle {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(0.9) rotate(0deg);
+        opacity: 0.85;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.15) rotate(14deg);
+        opacity: 1;
+    }
+}
+
+/* Interactive Hover Reactions (Crisp, No Neon Bleed) */
+.doodle-item:hover {
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.95)) brightness(1.12);
+    transform: scale(1.12) !important;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 3rem;
 }
 
 .hero-copy,
-.hero-image{
+.hero-image {
     transition:
         transform .8s ease,
         opacity .8s ease;
 }
 
-.hero.slide .hero-copy{
-    transform:translateX(-350px);
-    opacity:0;
+.hero.slide .hero-copy {
+    transform: translateX(-350px);
+    opacity: 0;
 }
 
-.hero.slide .hero-image{
-    transform:translateX(350px);
-    opacity:0;
+.hero.slide .hero-image {
+    transform: translateX(350px);
+    opacity: 0;
+}
+
+/* Hard guard: First page root elements & cutouts MUST NEVER overlap subsequent stages (exclude paper-tear clones) */
+.hero.scrolled-past-home > .hero-content > .hero-copy,
+.hero.scrolled-past-home > .hero-image,
+.hero.scrolled-past-home .head-doodles:not(.paper-tear *),
+.hero.scrolled-past-home .doodle-item:not(.paper-tear *),
+.hero.scrolled-past-home .washi-tape:not(.paper-tear *),
+.hero.scrolled-past-home .paper-cutout-backing:not(.paper-tear *),
+.hero.scrolled-past-home .paper-tear,
+.hero.scrolled-past-home .hero-paper-surface,
+.hero.scrolled-past-home .corner-paper-scrap,
+.hero.about-view > .hero-content > .hero-copy,
+.hero.about-view > .hero-image,
+.hero.about-view .head-doodles:not(.paper-tear *),
+.hero.about-view .doodle-item:not(.paper-tear *),
+.hero.about-view .washi-tape:not(.paper-tear *),
+.hero.about-view .paper-cutout-backing:not(.paper-tear *),
+.hero.about-view .hero-paper-surface,
+.hero.about-view .corner-paper-scrap,
+.hero.projects-view-active > .hero-content > .hero-copy,
+.hero.projects-view-active > .hero-image,
+.hero.projects-view-active .head-doodles:not(.paper-tear *),
+.hero.projects-view-active .doodle-item:not(.paper-tear *),
+.hero.projects-view-active .washi-tape:not(.paper-tear *),
+.hero.projects-view-active .paper-cutout-backing:not(.paper-tear *),
+.hero.projects-view-active .hero-content,
+.hero.projects-view-active .paper-tear,
+.hero.projects-view-active .hero-paper-surface,
+.hero.projects-view-active .corner-paper-scrap,
+.hero.slide .hero-image,
+.hero.slide .hero-copy,
+.hero.slide .paper-tear,
+.hero.slide .hero-paper-surface,
+.hero.slide .corner-paper-scrap {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 
-@media(max-width:768px){
 
-    .hero{
-        flex-direction:column;
-        justify-content:center;
-        text-align:center;
+@media(max-width:768px) {
+
+    .hero {
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
     }
 
-    .hero-content{
-        width:100%;
-        margin-top:120px;
+    .hero-content {
+        width: 100%;
+        margin-top: 120px;
     }
 
-    .hero-image{
-        width:100%;
-        justify-content:center;
+    .hero-image {
+        width: 100%;
+        justify-content: center;
     }
 
-    .hero-image img{
-        height:45vh;
+    .hero-image-frame {
+        height: 45vh;
     }
 
-    .small-line{
-        font-size:1.5rem;
+    .paper-cutout-backing {
+        right: 0;
+        width: 105%;
+        bottom: 0;
     }
 
-    .design-word{
-        width:280px;
-        max-width:280px;
-        left:0;
-        margin:auto;
+    .hero-image img.hero-portrait {
+        height: 100%;
     }
 
-    .build-line{
-        font-size:4rem;
+    .small-line {
+        font-size: 1.5rem;
     }
 
-    .hero-tag{
-        margin:auto auto 20px;
-        letter-spacing:3px;
-        font-size:.7rem;
+    .design-word {
+        width: 280px;
+        max-width: 280px;
+        left: 0;
+        margin: auto;
     }
 
-    .journey-stamp{
-        display:none;
+    .build-line {
+        font-size: 4rem;
+    }
+
+    .hero-tag {
+        margin: auto auto 20px;
+        letter-spacing: 3px;
+        font-size: .7rem;
+    }
+
+    .journey-stamp {
+        display: none;
     }
 }
 
-.btn{
-    padding:14px 28px;
-    background:#f5f5f5;
-    color:#0d0d0d;
-    text-decoration:none;
-    border-radius:50px;
-    font-weight:600;
+.btn {
+    padding: 14px 28px;
+    background: #f5f5f5;
+    color: #0d0d0d;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
 }
 
-.btn-outline{
-    padding:14px 28px;
-    border:1px solid #f5f5f5;
-    color:#f5f5f5;
-    text-decoration:none;
-    border-radius:50px;
+.btn-outline {
+    padding: 14px 28px;
+    border: 1px solid #f5f5f5;
+    color: #f5f5f5;
+    text-decoration: none;
+    border-radius: 50px;
 }
 
 /* AIRPLANE */
 
-.plane-path{
-    position:absolute;
-    top:100px;
-    left:30%;
-    width:100%; 
-    height:110%;
-    transform: translateY(-30px);
-    z-index:1;
+.plane-path {
+    position: absolute;
+    top: 100px;
+    left: 30%;
+    width: 100%;
+    height: 110%;
+    transform: translateY(-30px) translateZ(0);
+    will-change: transform;
+    z-index: 1;
+    overflow: visible;
 }
 
-.plane-path path{
-    fill:none;
-    stroke: #efefef;;
-    stroke-width:2.5;
-
-    stroke-dasharray:12 10;
+.plane-node {
+    transform-origin: 0 0;
+    will-change: transform, opacity;
 }
-.plane-path image{
+
+.plane-path path {
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 14 11 11 10 16 11;
+}
+
+.plane-path image {
     animation: float 4s ease-in-out infinite;
 }
 
-.draw-path,
-.dashed-path{
-    transition: opacity 1s ease;
+.draw-path {
+    display: none;
 }
 
-.dashed-path{
-    opacity:0.25;
+.dashed-path {
+    opacity: 1;
 }
 
 
-@keyframes float{
-    0%,100%{
-        transform:translateY(0);
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
     }
 
-    50%{
-        transform:translateY(-4px);
+    50% {
+        transform: translateY(-4px);
     }
 }
 
 
 /*Journey Stamp*/
-.journey-stamp{
-    position:absolute;
-
-    display:flex;
-    align-items:flex-start;
-    gap:10px;
-
-    font-family:'Oswald', sans-serif;
-    font-size:15px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-
-    color:#C4B5FD;
-    opacity:.9;
-    transform:translateY(-50%);
-    z-index:5;
+.journey-stamp {
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #C4B5FD;
+    opacity: .95;
+    z-index: 5;
+    pointer-events: none;
 }
 
-/* stamp */
-
-/* .stamp-1{
-    top:89px;
-    left:660px;
+.hero.about-view .journey-stamp {
+    pointer-events: auto;
 }
 
-.stamp-2{
-    top:135px;
-    left:885px;
+.stamp-dot {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #C4B5FD;
+    flex-shrink: 0;
+    transform: scale(1);
+    transition: transform .35s ease;
+    z-index: 2;
 }
 
-.stamp-3{
-    top:320px;
-    left:853px;
+.hero.about-view .stamp-dot {
+    transform: scale(1.5);
+    box-shadow: 0 0 8px rgba(196, 181, 253, 0.6);
 }
 
-.stamp-4{
-    top:500px;
-    left:730px;
+/* Journey Stamp Leader Line & Content */
+.stamp-leader {
+    position: absolute;
+    left: 0;
+    top: 0;
+    overflow: visible;
+    pointer-events: none;
 }
 
-.stamp-5{
-    top:554px;
-    left:830px;
-} */
-
-
-.stamp-dot{
-    width:8px;
-    height:8px;
-    border-radius:50%;
-    background:#C4B5FD;
-
-    flex-shrink:0;
-
-    margin-top:8px;
-
-    transform:scale(1);
-    transition:.35s ease;
+.stamp-leader line {
+    stroke: #C4B5FD;
+    stroke-width: 1.4;
+    fill: none;
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+    transition: stroke-dashoffset .60s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stamp-line{
-    width:80px;
-    height:1px;
-
-    background:#C4B5FD;
-
-    margin-top:12px;
-
-    transform:scaleX(0);
-
-    transition:
-        transform .45s ease;
+.hero.about-view .stamp-leader line {
+    stroke-dashoffset: 0;
 }
 
-.stamp-info{
-    display:flex;
-    align-items:flex-start;
+.stamp-content {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    max-width: 250px;
+    opacity: 1;
+    /* Headings are visible on Home page */
+    transform: translateX(0);
+    transition: transform .65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stamp-content{
-    display:flex;
-    flex-direction:column;
-
-    margin-left:12px;
-
-    transform:translateX(-80px);
-
-    transition:
-        transform .45s ease;
+/* Stamp 1: below airplane, heading snug beside dot on Home, extends left on scroll */
+.stamp-1 .stamp-content {
+    right: 12px;
+    top: 0;
+    align-items: flex-end;
+    text-align: right;
 }
 
-.stamp-content h4{
-    margin:0;
-    font-size:.85rem;
-    color:#C4B5FD;
-
-    opacity:1;
+.hero.about-view .stamp-1 .stamp-content {
+    transform: translateX(-74px);
 }
 
-/* the dashed route runs behind the labels, so the glyphs carry their own
-   background-coloured halo - it keeps the text legible without masking
-   the portrait behind it */
+/* Stamp 2: right of loop, heading snug beside dot on Home, extends right on scroll */
+.stamp-2 .stamp-content {
+    left: 12px;
+    top: 0;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.hero.about-view .stamp-2 .stamp-content {
+    transform: translateX(74px);
+}
+
+/* Stamp 3: middle curve, heading snug beside dot on Home, extends left on scroll */
+.stamp-3 .stamp-content {
+    right: 12px;
+    top: 0;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.hero.about-view .stamp-3 .stamp-content {
+    transform: translateX(-74px);
+}
+
+/* Stamp 4: at curve apex, heading snug beside dot on Home, extends left on scroll */
+.stamp-4 .stamp-content {
+    right: 12px;
+    top: 0;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.hero.about-view .stamp-4 .stamp-content {
+    transform: translateX(-74px);
+}
+
+/* Stamp 5: bottom curve, heading snug beside dot on Home, extends right on scroll */
+.stamp-5 .stamp-content {
+    left: 12px;
+    top: 0;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.hero.about-view .stamp-5 .stamp-content {
+    transform: translateX(74px);
+}
+
+.stamp-content h4 {
+    margin: 0;
+    font-size: .84rem;
+    font-weight: 600;
+    color: #C4B5FD;
+    letter-spacing: 1.5px;
+    line-height: 1.2;
+    transform: translateY(-50%);
+    opacity: .92;
+    white-space: nowrap;
+    transition: color .35s ease, opacity .35s ease;
+}
+
+.hero.about-view .stamp-content h4 {
+    opacity: 1;
+    color: #DDD6FE;
+}
+
 .stamp-content h4,
-.stamp-content p{
+.stamp-content p {
     text-shadow:
         0 0 3px #0d0d0d,
         0 0 3px #0d0d0d,
@@ -527,217 +914,369 @@ html{
         0 1px 0 #0d0d0d,
         0 -1px 0 #0d0d0d;
 }
-.stamp-subtitle{
-    font-size:.7rem;
-    letter-spacing:2px;
-    opacity:0;
-    max-height:0;
-    overflow:hidden;
+
+.stamp-content p {
+    margin: 0;
+    max-height: 0;
+    overflow: hidden;
+    width: 100%;
+    max-width: 250px;
+    font-size: .78rem;
+    line-height: 1.55;
+    color: #d1d5db;
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+    transition: max-height .55s ease, opacity .45s ease .12s, transform .50s ease .12s, margin .55s ease;
 }
 
-.stamp-content p{
-    margin-top:8px;
-    max-width:200px;
-
-    font-size:.75rem;
-    line-height:1.5;
-
-    color:#d1d5db;
-
-    opacity:0;
-    transform:translateY(8px);
-
-    transition:
-        opacity .35s ease,
-        transform .35s ease;
+.hero.about-view .stamp-content p {
+    margin-top: 8px;
+    max-height: 130px;
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
-
-.stamp-2 .stamp-line{
-    transition-delay:.4s;
+/* Staggered reveals for graceful appearance */
+.stamp-1 .stamp-leader line {
+    transition-delay: .46s;
 }
 
-.stamp-2 .stamp-content{
-    transition-delay:.55s;
+.stamp-1 .stamp-content {
+    transition-delay: .46s;
 }
 
-.stamp-3 .stamp-line{
-    transition-delay:.25s;
+.stamp-2 .stamp-leader line {
+    transition-delay: .34s;
 }
 
-.stamp-3 .stamp-content{
-    transition-delay:.4s;
+.stamp-2 .stamp-content {
+    transition-delay: .34s;
 }
 
-.stamp-4 .stamp-line{
-    transition-delay:.1s;
+.stamp-3 .stamp-leader line {
+    transition-delay: .22s;
 }
 
-.stamp-4 .stamp-content{
-    transition-delay:.25s;
+.stamp-3 .stamp-content {
+    transition-delay: .22s;
 }
 
-.stamp-5 .stamp-line{
-    transition-delay:0s;
+.stamp-4 .stamp-leader line {
+    transition-delay: .10s;
 }
 
-.stamp-5 .stamp-content{
-    transition-delay:0s;
+.stamp-4 .stamp-content {
+    transition-delay: .10s;
 }
 
-
-.stamp-line{
-    transform-origin:left center;
+.stamp-5 .stamp-leader line {
+    transition-delay: 0s;
 }
 
-.stamp-1 .stamp-line,
-.stamp-3 .stamp-line,
-.stamp-4 .stamp-line{
-    transform-origin:right center;
+.stamp-5 .stamp-content {
+    transition-delay: 0s;
 }
 
-.stamp-1 .stamp-line{
-    transition-delay:.55s;
+/* Interactive Hover & Click Expansion for Journey Stamps */
+.journey-stamp {
+    cursor: pointer;
 }
 
-.stamp-1 .stamp-content{
-    transition-delay:.7s;
+.journey-stamp:hover,
+.journey-stamp.is-expanded {
+    z-index: 20;
+    pointer-events: auto;
 }
 
-.stamp-1 .stamp-content{
-    transform:translateX(50px);
+.journey-stamp:hover .stamp-dot,
+.journey-stamp.is-expanded .stamp-dot {
+    transform: scale(1.7) !important;
+    box-shadow: 0 0 12px rgba(196, 181, 253, 0.9) !important;
 }
 
-.stamp-3 .stamp-content{
-    transform:translateX(85px);
-}
-.stamp-4 .stamp-content{
-    transform:translateX(230px);
-}
-
-.hero.about-view .stamp-dot{
-    transform:scale(1.5);
+.journey-stamp:hover .stamp-leader line,
+.journey-stamp.is-expanded .stamp-leader line {
+    stroke-dashoffset: 0 !important;
+    stroke: #ffffff !important;
+    transition-delay: 0s !important;
 }
 
-.hero.about-view .stamp-line{
-    transform:scaleX(1);
+.journey-stamp.stamp-1:hover .stamp-content,
+.journey-stamp.stamp-1.is-expanded .stamp-content,
+.journey-stamp.stamp-3:hover .stamp-content,
+.journey-stamp.stamp-3.is-expanded .stamp-content,
+.journey-stamp.stamp-4:hover .stamp-content,
+.journey-stamp.stamp-4.is-expanded .stamp-content {
+    transform: translateX(-74px) !important;
+    transition-delay: 0s !important;
 }
 
-.hero.about-view .stamp-content{
-    transform: translateX(0);
-
-    /* keeps the route from showing through the stamp text */
-    background:#0d0d0d;
+.journey-stamp.stamp-2:hover .stamp-content,
+.journey-stamp.stamp-2.is-expanded .stamp-content,
+.journey-stamp.stamp-5:hover .stamp-content,
+.journey-stamp.stamp-5.is-expanded .stamp-content {
+    transform: translateX(74px) !important;
+    transition-delay: 0s !important;
 }
 
-.hero.about-view .stamp-content p{
-    opacity:1;
-    transform:translateY(0);
+.journey-stamp:hover .stamp-content h4,
+.journey-stamp.is-expanded .stamp-content h4 {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    text-shadow: 0 0 10px rgba(196, 181, 253, 0.9), 0 0 3px #0d0d0d !important;
 }
 
-@media(max-width:1200px){
+.journey-stamp:hover .stamp-content p,
+.journey-stamp.is-expanded .stamp-content p {
+    margin-top: 8px !important;
+    max-height: 140px !important;
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    transition-delay: 0s !important;
+}
 
-    .journey-stamp{
-        display:none;
+@media(max-width:1200px) {
+
+    html {
+        scroll-snap-type: none;
     }
 
-    html{
-        scroll-snap-type:none;
-    }
-
-    .hero-wrapper{
-        height:250vh;
+    .hero-wrapper {
+        height: 250vh;
     }
 
 }
 
-/*Social*/
-.social-rail{
-    position:absolute;
-
-    right:40px;
-    bottom:20px;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-
-    gap:22px;
-    z-index:20;
+/* ===============================================================
+   SOCIAL RAIL - DYNAMIC HIGH CONTRAST
+   - About & Projects: All elements pure white (#ffffff) on dark canvas
+   - Home Page: Split contrast -
+       * Top part (.rail-line & .rail-title) sits on dark background -> pure white (#ffffff)
+       * Bottom part (icons & .rail-dot) sits on light purple paper cutout -> deep black ink (#0d0d0d)
+   - Slide (Paper Unfold / Contact): All elements deep black ink (#0d0d0d) on light paper
+   =============================================================== */
+.social-rail {
+    position: absolute;
+    right: 36px;
+    bottom: 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    z-index: 35;
+    background: transparent;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: auto;
+    transition: opacity .35s ease;
 }
 
-.rail-line{
-    width:1px;
-    height:120px;
-    background:rgba(196,181,253,.5);
+/* Default / Dark Background State (About & Projects views): All Pure White */
+.rail-line {
+    width: 2px;
+    height: 95px;
+    background: #ffffff;
+    border-radius: 1px;
+    box-shadow: none;
+    transition: background-color .35s ease;
 }
 
-.rail-title{
-    writing-mode:vertical-rl;
-    transform:rotate(180deg);
-
-    font-size:.75rem;
-    letter-spacing:4px;
-
-    color:#C4B5FD;
+.rail-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: 5px;
+    color: #ffffff;
+    text-shadow: none;
+    user-select: none;
+    transition: color .35s ease;
 }
 
-.social-rail a{
-    color:#f5f5f5;
-    font-size:1.2rem;
-
-    transition:.3s;
+.social-rail a {
+    color: #ffffff;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    outline: none;
+    border: none;
+    box-shadow: none;
+    transition: transform .25s ease, opacity .25s ease, color .35s ease;
+    filter: none;
 }
 
-.social-rail a:hover{
-    color:#C4B5FD;
-    transform:translateY(-3px);
+.social-rail a:hover,
+.social-rail a:focus,
+.social-rail a:visited,
+.social-rail a:active {
+    color: #C4B5FD;
+    text-decoration: none !important;
+    outline: none;
+    border: none;
+    box-shadow: none;
 }
 
-.rail-plane{
-    font-size:1rem;
-    color:#C4B5FD;
-
-    margin-top:8px;
+.social-rail a:hover {
+    transform: translateY(-3px) scale(1.22);
+    opacity: 0.85;
 }
 
-.rail-dot{
-    width:8px;
-    height:8px;
-    background:#C4B5FD;
-    border-radius:50%;
-    margin-top:6px;
+.rail-plane {
+    font-size: 1rem;
+    color: #ffffff;
+    margin-top: 4px;
+    filter: none;
+    transition: color .35s ease;
+}
+
+.rail-dot {
+    width: 7px;
+    height: 7px;
+    background: #ffffff;
+    border-radius: 50%;
+    margin-top: 4px;
+    box-shadow: none;
+    transition: background-color .35s ease;
+}
+
+/* Explicit About & Projects views: 100% Crisp White */
+.hero.about-view .social-rail .rail-line,
+.hero.projects-view-active .social-rail .rail-line {
+    background: #ffffff;
+}
+
+.hero.about-view .social-rail .rail-title,
+.hero.projects-view-active .social-rail .rail-title {
+    color: #ffffff;
+}
+
+.hero.about-view .social-rail a,
+.hero.projects-view-active .social-rail a {
+    color: #ffffff;
+}
+
+.hero.about-view .social-rail a:hover,
+.hero.projects-view-active .social-rail a:hover {
+    color: #C4B5FD;
+}
+
+.hero.about-view .social-rail .rail-dot,
+.hero.projects-view-active .social-rail .rail-dot {
+    background: #ffffff;
+}
+
+/* -------------------------------------------------------------
+   HOME PAGE (SPLIT CONTRAST):
+   Top part (.rail-line, .rail-title) sits on dark background -> pure white (#ffffff)
+   Bottom part (icons, .rail-dot) sits on light purple paper cutout -> deep black ink (#0d0d0d)
+   ------------------------------------------------------------- */
+.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-line,
+.social-rail.home-split .rail-line {
+    background: #ffffff;
+}
+
+.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-title,
+.social-rail.home-split .rail-title {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail a,
+.social-rail.home-split a {
+    color: #0d0d0d;
+    text-decoration: none !important;
+}
+
+.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail a:hover,
+.social-rail.home-split a:hover {
+    color: #444444;
+    opacity: 0.8;
+    text-decoration: none !important;
+}
+
+.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-plane,
+.social-rail.home-split .rail-plane {
+    color: #0d0d0d;
+}
+
+.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-dot,
+.social-rail.home-split .rail-dot {
+    background: #0d0d0d;
+}
+
+/* -------------------------------------------------------------
+   PAPER UNFOLD / CONTACT SLIDE (ALL LIGHT PAPER BACKGROUND):
+   Every element is deep pitch black ink (#0d0d0d)
+   ------------------------------------------------------------- */
+.hero.slide .social-rail .rail-line,
+.social-rail.dark-ink-all .rail-line {
+    background: #0d0d0d;
+}
+
+.hero.slide .social-rail .rail-title,
+.social-rail.dark-ink-all .rail-title {
+    color: #0d0d0d;
+    font-weight: 800;
+}
+
+.hero.slide .social-rail a,
+.social-rail.dark-ink-all a {
+    color: #0d0d0d;
+    text-decoration: none !important;
+}
+
+.hero.slide .social-rail a:hover,
+.social-rail.dark-ink-all a:hover {
+    color: #444444;
+    opacity: 0.8;
+    text-decoration: none !important;
+}
+
+.hero.slide .social-rail .rail-plane,
+.social-rail.dark-ink-all .rail-plane {
+    color: #0d0d0d;
+}
+
+.hero.slide .social-rail .rail-dot,
+.social-rail.dark-ink-all .rail-dot {
+    background: #0d0d0d;
 }
 
 .rail-line,
 .rail-title,
-.social-rail a{
-    opacity:0;
-    transform:translateY(15px) scale(.8);
+.social-rail a {
+    opacity: 0;
+    transform: translateY(15px) scale(.8);
 }
 
-.social-rail.animate .rail-dot{
+.social-rail.animate .rail-dot {
     animation: railTravel 1.6s ease;
 }
 
-@keyframes railTravel{
+@keyframes railTravel {
 
-    0%{
-        transform:translateY(0);
+    0% {
+        transform: translateY(0);
     }
 
-    40%{
-        transform:translateY(-250px);
+    40% {
+        transform: translateY(-250px);
     }
 
-    100%{
-        transform:translateY(0);
+    100% {
+        transform: translateY(0);
     }
 }
 
 .rail-line,
 .rail-title,
-.social-rail a{
+.social-rail a {
     transition:
         opacity .35s ease,
         transform .35s ease;
@@ -745,134 +1284,2245 @@ html{
 
 .show-line,
 .show-title,
-.show-icon{
-    opacity:1;
-    transform:translateY(0) scale(1);
+.show-icon {
+    opacity: 1;
+    transform: translateY(0) scale(1);
 }
 
-.show-icon{
-    opacity:1 !important;
-    transform:translateY(0) scale(1) !important;
+.show-icon {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
 }
+
+/* ===== 3D PAPER BALL UNCRUMPLE (third scroll) ===== */
+
+.paper-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    background: transparent;
+}
+
+.paper-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+    background: transparent;
+}
+
 /* ===== PAPER TEAR TRANSITION ===== */
 
-.paper-filter{
-    position:absolute;
-    width:0;
-    height:0;
-    overflow:hidden;
-    pointer-events:none;
+.paper-filter {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
 }
 
-.paper-tear{
-    position:absolute;
-    inset:0;
+.paper-tear {
+    position: absolute;
+    inset: 0;
 
-    z-index:6;
-    pointer-events:none;
-    overflow:hidden;
+    z-index: 6;
+    pointer-events: none;
+    overflow: hidden;
 
-    opacity:0;
+    opacity: 0;
+    display: none;
 
-    --paper-grain:0;
-    --paper-crinkle:0;
+    --paper-grain: 0.25;
+    --paper-crinkle: 0.22;
 }
 
-.paper-half{
-    position:absolute;
-    inset:0;
+.paper-tear.is-active {
+    display: block !important;
+}
 
-    transform-origin:center center;
-    backface-visibility:hidden;
-    will-change:transform,opacity;
+.paper-tear:not(.is-active) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
 
-    /* a faint sheet surface so the paper reads as a physical thing */
-    background-color:rgba(245,245,245,var(--paper-wash,0));
+.paper-tear:not(.is-active) * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* ===============================================================
+   HERO PAPER SURFACE & TEAR HALVES
+   Tactile dark charcoal cotton rag paper.
+   Identical background so landing page at rest seamlessly
+   splits and scratches into 2 parts on scroll.
+   =============================================================== */
+.hero-paper-surface,
+.paper-half {
+    background-color: #0e0e13;
+    background-image:
+        /* Natural paper vignette */
+        radial-gradient(ellipse at 50% 50%, rgba(28, 28, 36, 0.55) 0%, rgba(10, 10, 14, 0.92) 100%),
+        /* Longitudinal cotton paper fibers */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperFibers'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035 0.85' numOctaves='4' result='noise'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 1  0 1 0 0 1  0 0 1 0 1  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperFibers)'/%3E%3C/svg%3E"),
+        /* Fine cold-pressed paper tooth grain */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperGrain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 1  0 1 0 0 1  0 0 1 0 1  0 0 0 0.14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperGrain)'/%3E%3C/svg%3E");
+}
+
+.hero-paper-surface {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
+    transition: opacity 0.2s ease;
+}
+
+.paper-half {
+    position: absolute;
+    inset: 0;
+
+    transform-origin: center center;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+
+    /* Deep paper casting shadow as it tears apart */
+    box-shadow:
+        0 16px 50px rgba(0, 0, 0, 0.95),
+        0 4px 14px rgba(0, 0, 0, 0.8),
+        inset 0 0 80px rgba(0, 0, 0, 0.7);
 
     /* keeps the ragged cut from showing a hairline seam */
-    outline:1px solid transparent;
+    outline: 1px solid transparent;
 }
 
-.paper-clone{
-    pointer-events:none;
+.paper-half.left {
+    z-index: 2;
+}
+
+.paper-half.right {
+    z-index: 1;
+}
+
+.paper-clone,
+.paper-clone * {
+    pointer-events: none !important;
+    transition: none !important;
+    animation: none !important;
+    -webkit-transition: none !important;
+    -webkit-animation: none !important;
+}
+
+/* Ensure content on tearing paper halves remains 100% visible and travels with the paper */
+.paper-tear.is-active,
+.paper-tear.is-active .paper-half,
+.paper-tear.is-active .paper-clone,
+.paper-tear.is-active .paper-clone * {
+    visibility: visible !important;
+}
+
+.paper-tear.is-active .paper-clone.hero-copy {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.paper-tear.is-active .paper-clone.hero-image {
+    display: flex !important;
+    opacity: 1 !important;
+}
+
+.paper-tear.is-active .paper-clone .hero-image-frame {
+    display: inline-flex !important;
+    opacity: 1 !important;
+}
+
+.paper-tear.is-active .paper-clone .hero-portrait {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.paper-tear.is-active .paper-clone .paper-cutout-backing {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.paper-tear.is-active .paper-clone .washi-tape {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.paper-tear.is-active .paper-clone .head-doodles,
+.paper-tear.is-active .paper-clone .doodle-item {
+    display: block !important;
+    opacity: 1 !important;
 }
 
 /* the original sheet's top margin collapses through .hero-copy;
    the absolute clone needs that margin removed to line up exactly */
-.paper-clone > .hero-tag{
-    margin-top:0;
+.paper-clone>.hero-tag {
+    margin-top: 0;
 }
 
 /* crumpled paper highlights, pre-rendered so scrolling stays cheap */
-.paper-half::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    z-index:3;
+.paper-half::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
 
-    pointer-events:none;
+    pointer-events: none;
 
-    background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='420'%20height='420'%3E%3Cfilter%20id='c'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.012%200.02'%20numOctaves='4'%20seed='6'%20stitchTiles='stitch'%20result='t'/%3E%3CfeDiffuseLighting%20in='t'%20lighting-color='%23ffffff'%20surfaceScale='2.4'%3E%3CfeDistantLight%20azimuth='135'%20elevation='58'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect%20width='420'%20height='420'%20filter='url(%23c)'%20opacity='0.85'/%3E%3C/svg%3E");
-    background-size:420px 420px;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='420'%20height='420'%3E%3Cfilter%20id='c'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.012%200.02'%20numOctaves='4'%20seed='6'%20stitchTiles='stitch'%20result='t'/%3E%3CfeDiffuseLighting%20in='t'%20lighting-color='%23ffffff'%20surfaceScale='2.4'%3E%3CfeDistantLight%20azimuth='135'%20elevation='58'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect%20width='420'%20height='420'%20filter='url(%23c)'%20opacity='0.85'/%3E%3C/svg%3E");
+    background-size: 420px 420px;
 
-    mix-blend-mode:soft-light;
-    opacity:var(--paper-crinkle);
+    mix-blend-mode: soft-light;
+    opacity: var(--paper-crinkle);
 }
 
 /* fine white paper fibre dust */
-.paper-half::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    z-index:3;
+.paper-half::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 3;
 
-    pointer-events:none;
+    pointer-events: none;
 
-    background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='3'%20stitchTiles='stitch'%20result='n'/%3E%3CfeColorMatrix%20in='n'%20type='matrix'%20values='0%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200.9%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23g)'%20opacity='0.6'/%3E%3C/svg%3E");
-    background-size:180px 180px;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='g'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='3'%20stitchTiles='stitch'%20result='n'/%3E%3CfeColorMatrix%20in='n'%20type='matrix'%20values='0%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200.9%200%200%200%200'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23g)'%20opacity='0.6'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
 
-    mix-blend-mode:screen;
-    opacity:var(--paper-grain);
+    mix-blend-mode: screen;
+    opacity: var(--paper-grain);
 }
 
-/* bright, fibrous torn edge */
-.paper-half .tear-line{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    z-index:4;
+/* authentic torn paper deckle edge */
+.paper-half .tear-line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
 
-    pointer-events:none;
-    overflow:visible;
+    pointer-events: none;
+    overflow: visible;
 }
 
-.paper-half .tear-line polyline{
-    fill:none;
+.paper-half .tear-line polyline {
+    fill: none;
 
-    stroke:#f5f5f5;
-    stroke-width:2.2;
-    stroke-linecap:round;
-    stroke-linejoin:round;
+    stroke: #ffffff;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 
-    vector-effect:non-scaling-stroke;
+    vector-effect: non-scaling-stroke;
 
-    filter:drop-shadow(0 0 4px rgba(255,255,255,.85));
+    filter:
+        drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))
+        drop-shadow(0 0 1px #ffffff)
+        drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
 }
 
-.paper-dust{
-    position:absolute;
-    inset:0;
-    z-index:5;
+.paper-dust {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
 
-    pointer-events:none;
+    pointer-events: none;
 
     background:
         radial-gradient(circle at 50% 48%,
-            rgba(255,255,255,.22) 0%,
-            rgba(255,255,255,.06) 34%,
-            rgba(255,255,255,0) 62%);
+            rgba(255, 255, 255, .22) 0%,
+            rgba(255, 255, 255, .06) 34%,
+            rgba(255, 255, 255, 0) 62%);
 
-    mix-blend-mode:screen;
-    opacity:0;
+    mix-blend-mode: screen;
+    opacity: 0;
+}
+
+
+/* ===============================================================
+   CHAPTER 02: PROJECTS SHOWCASE VIEW
+   =============================================================== */
+
+.projects-view {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 25;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .55s cubic-bezier(0.16, 1, 0.3, 1), visibility .55s ease;
+    background: radial-gradient(ellipse at 65% 50%, rgba(139, 92, 246, 0.12) 0%, rgba(13, 13, 13, 0) 72%);
+    overflow: hidden;
+}
+
+.projects-view.projects-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Ambient Glow */
+.projects-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* Background Hand-Drawn SVG Doodles */
+.projects-doodles {
+    display: none !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: visible;
+}
+
+.doodle-leaf {
+    transform-origin: 0 30px;
+    animation: leafGentleSway 5s ease-in-out infinite alternate;
+}
+
+@keyframes leafGentleSway {
+    0% {
+        transform: translate(1340px, 70px) scale(0.95) rotate(18deg);
+    }
+
+    100% {
+        transform: translate(1340px, 70px) scale(0.95) rotate(26deg);
+    }
+}
+
+.leaf-bottom {
+    animation: leafBottomSway 5.5s ease-in-out infinite alternate;
+}
+
+@keyframes leafBottomSway {
+    0% {
+        transform: translate(1260px, 680px) scale(0.95) rotate(-22deg);
+    }
+
+    100% {
+        transform: translate(1260px, 680px) scale(0.95) rotate(-14deg);
+    }
+}
+
+.doodle-scales {
+    animation: scaleBalanceSway 6s ease-in-out infinite alternate;
+}
+
+@keyframes scaleBalanceSway {
+    0% {
+        transform: translate(1265px, 535px) scale(0.85) rotate(-3deg);
+    }
+
+    100% {
+        transform: translate(1265px, 535px) scale(0.85) rotate(3deg);
+    }
+}
+
+/* Left Sidebar (Chapter Info, Heading, Project Nav, CTA) */
+.projects-sidebar {
+    position: absolute;
+    left: 5vw;
+    top: 125px;
+    width: 310px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    pointer-events: auto;
+}
+
+/* Initial state before entrance: completely hidden */
+.projects-sidebar .projects-chapter,
+.projects-sidebar .projects-heading,
+.projects-sidebar .projects-subheading,
+.projects-sidebar .project-nav-item,
+.projects-sidebar .projects-cta-btn {
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.projects-sidebar .chalk-underline {
+    transform: scaleX(0) rotate(-1.5deg);
+    transform-origin: left center;
+}
+
+/* Left Sidebar Entrances - Triggered AFTER Laptops Have Fallen Down */
+.projects-view.projects-active .projects-chapter {
+    animation: sidebarSlideIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.85s forwards;
+}
+
+.projects-view.projects-active .projects-heading {
+    animation: headingRevealUp 0.60s cubic-bezier(0.16, 1, 0.3, 1) 0.98s forwards;
+}
+
+.projects-view.projects-active .chalk-underline {
+    animation: underlineChalkDraw 0.55s cubic-bezier(0.25, 1, 0.5, 1) 1.15s forwards;
+}
+
+.projects-view.projects-active .projects-subheading {
+    animation: sidebarSlideIn 0.50s cubic-bezier(0.16, 1, 0.3, 1) 1.20s forwards;
+}
+
+.projects-view.projects-active .project-nav-item:nth-child(1) {
+    animation: navItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.28s forwards;
+}
+
+.projects-view.projects-active .project-nav-item:nth-child(2) {
+    animation: navItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.40s forwards;
+}
+
+.projects-view.projects-active .project-nav-item:nth-child(3) {
+    animation: navItemCascade 0.45s cubic-bezier(0.16, 1, 0.3, 1) 1.52s forwards;
+}
+
+.projects-view.projects-active .projects-cta-btn {
+    animation: ctaButtonPop 0.50s cubic-bezier(0.34, 1.4, 0.64, 1) 1.65s forwards;
+}
+
+.projects-chapter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chapter-badge {
+    font-family: 'Oswald', sans-serif;
+    font-size: .78rem;
+    letter-spacing: 2px;
+    color: #C4B5FD;
+    border: 1.4px solid rgba(196, 181, 253, 0.65);
+    padding: 4px 14px;
+    border-radius: 9999px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.chapter-line {
+    position: relative;
+    width: 42px;
+    height: 1.5px;
+    background: rgba(196, 181, 253, 0.45);
+}
+
+.chapter-dot {
+    position: absolute;
+    right: -1px;
+    top: -2.5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #C4B5FD;
+}
+
+.projects-heading {
+    font-family: 'Anton', 'Oswald', sans-serif;
+    font-size: 3.9rem;
+    line-height: 0.96;
+    letter-spacing: 1.2px;
+    color: #ffffff;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.chalk-built {
+    position: relative;
+    display: inline-block;
+    color: #ffffff;
+}
+
+.chalk-underline {
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 105%;
+    height: 6px;
+    background: #C4B5FD;
+    border-radius: 4px;
+    opacity: .9;
+    transform: rotate(-1.5deg);
+    box-shadow: 0 0 8px rgba(196, 181, 253, 0.5);
+}
+
+.projects-subheading {
+    font-family: 'Oswald', sans-serif;
+    font-size: .85rem;
+    letter-spacing: 1.6px;
+    color: #9CA3AF;
+    margin: 0;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.projects-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    margin-top: .4rem;
+}
+
+.project-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: transform .3s ease, color .3s ease;
+    user-select: none;
+}
+
+.project-nav-item .p-index {
+    font-family: 'Anton', 'Oswald', sans-serif;
+    font-size: 1.6rem;
+    color: #C4B5FD;
+    font-style: italic;
+    width: 28px;
+}
+
+.project-nav-item .p-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #D1D5DB;
+    letter-spacing: .5px;
+    transition: color .3s ease;
+}
+
+.project-nav-item .p-arrow {
+    color: #9CA3AF;
+    font-size: 1.2rem;
+    transition: transform .3s ease, color .3s ease;
+    margin-left: 8px;
+}
+
+.project-nav-item:hover .p-title,
+.project-nav-item.active .p-title {
+    color: #ffffff;
+}
+
+.project-nav-item:hover .p-arrow,
+.project-nav-item.active .p-arrow {
+    transform: translateX(6px);
+    color: #C4B5FD;
+}
+
+.projects-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    width: max-content;
+    padding: 10px 22px;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(196, 181, 253, 0.55);
+    text-decoration: none;
+    color: #E5E7EB;
+    font-family: 'Oswald', sans-serif;
+    font-size: .82rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all .35s ease;
+    margin-top: .6rem;
+}
+
+.projects-cta-btn:hover {
+    border-color: #C4B5FD;
+    background: rgba(196, 181, 253, 0.12);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(196, 181, 253, 0.25);
+}
+
+.cta-arrow-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #C4B5FD;
+    color: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+}
+
+/* Center/Right 3D Laptops Showcase Stage */
+.projects-stage {
+    position: absolute;
+    left: 44vw;
+    right: 0;
+    top: 115px;
+    bottom: 15px;
+    perspective: 1400px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Laptop 3D Common Styles (Realistic MacBook Pro Architecture) */
+.laptop-wrapper {
+    position: absolute;
+    transform-style: preserve-3d;
+    transition: transform .7s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .5s ease;
+    pointer-events: auto;
+}
+
+.laptop-wrapper:hover {
+    transform: translateZ(25px) scale(1.02);
+}
+
+.laptop-device {
+    position: relative;
+    width: 100%;
+    transform-style: preserve-3d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 1. Display Screen Lid - Handcrafted Folded Art Cardstock Finish */
+.laptop-lid {
+    position: relative;
+    width: 100%;
+    background-color: #eee9de;
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E"),
+        linear-gradient(145deg, #f7f4ed 0%, #ebe5d8 50%, #ded6c5 100%);
+    border-radius: 6px 6px 2px 2px;
+    padding: 6px 6px 10px 6px;
+    box-sizing: border-box;
+    /* Crisp folded cardstock edge */
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
+        inset 0 -1.5px 0 rgba(135, 115, 90, 0.25),
+        inset 1.5px 0 0 rgba(255, 255, 255, 0.5),
+        inset -1.5px 0 0 rgba(135, 115, 90, 0.2),
+        0 16px 38px rgba(0, 0, 0, 0.65),
+        0 4px 12px rgba(0, 0, 0, 0.45);
+    transform-style: preserve-3d;
+}
+
+/* Screen Glare Removed (Only specific element shines kept) */
+.screen-glare {
+    display: none !important;
+}
+
+/* Paper-Punched Minimal Pinhole Notch */
+.screen-notch {
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background: transparent;
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.camera-lens {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #2b261f;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5), 0 0.5px 0 rgba(255, 255, 255, 0.5);
+}
+
+.camera-led {
+    display: none;
+}
+
+.laptop-screen {
+    position: relative;
+    background: #101116;
+    border-radius: 4px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    box-shadow:
+        inset 0 2px 5px rgba(0, 0, 0, 0.85),
+        inset 0 0 0 1px rgba(110, 95, 75, 0.35);
+    border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.laptop-screen-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+    border-radius: 3px;
+    filter: contrast(1.03) brightness(0.97);
+}
+
+/* Screen Chin */
+.lid-chin {
+    height: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    pointer-events: none;
+}
+
+/* 2. Folded Paper Crease Hinge */
+.laptop-hinge {
+    width: 28%;
+    height: 5px;
+    background: linear-gradient(to bottom, #d2c8b5, #b8ab94, #9f917a);
+    border-radius: 2px;
+    margin: -2px auto 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 2;
+}
+
+/* 3. 3D Folded Cardstock Keyboard Deck Base */
+.laptop-base-deck {
+    width: 104%;
+    height: 80px;
+    margin-left: -2%;
+    background-color: #eae4d7;
+    background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='basePaperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.25  0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23basePaperNoise)'/%3E%3C/svg%3E"),
+        linear-gradient(to bottom, #f3efe6 0%, #e6dfcf 55%, #d5cbb8 100%);
+    border-radius: 2px 2px 8px 8px;
+    box-sizing: border-box;
+    padding: 6px 12px 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1.5px 0 rgba(130, 110, 85, 0.3),
+        0 18px 45px rgba(0, 0, 0, 0.75);
+    transform-origin: top center;
+    transform: rotateX(62deg);
+    position: relative;
+    margin-top: -3px;
+    z-index: 3;
+}
+
+.keyboard-well {
+    width: 82%;
+    height: 38px;
+    margin: 0 auto;
+    background: #26221d;
+    background-image: linear-gradient(180deg, #1f1b16 0%, #2e2821 100%);
+    border-radius: 3px;
+    border: 1px solid rgba(130, 110, 85, 0.4);
+    padding: 3px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.45);
+    box-sizing: border-box;
+}
+
+.keyboard-grid {
+    width: 100%;
+    height: 100%;
+    background:
+        repeating-linear-gradient(to bottom, rgba(230, 220, 200, 0.22) 0px, rgba(230, 220, 200, 0.22) 1px, transparent 1px, transparent 7px),
+        repeating-linear-gradient(to right, rgba(230, 220, 200, 0.20) 0px, rgba(230, 220, 200, 0.20) 1px, transparent 1px, transparent 14px);
+    border-radius: 2px;
+}
+
+.trackpad {
+    width: 32%;
+    height: 22px;
+    margin: 6px auto 0;
+    background: linear-gradient(to bottom, #ded6c5, #cbbfab);
+    border: 1px solid rgba(160, 140, 115, 0.45);
+    border-radius: 2px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.deck-scoop {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: #9c8f7a;
+    border-radius: 2px 2px 0 0;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Ground Contact Drop Shadow */
+.laptop-contact-shadow {
+    position: absolute;
+    bottom: -24px;
+    left: 6%;
+    width: 88%;
+    height: 32px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0) 70%);
+    transform: rotateX(65deg) scale(0.5);
+    filter: blur(16px);
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.projects-view.projects-active .laptop-krishi .laptop-contact-shadow {
+    animation: shadowDeskSettle 0.70s cubic-bezier(0.25, 1, 0.35, 1) 0.04s forwards;
+}
+
+.projects-view.projects-active .laptop-nyay .laptop-contact-shadow {
+    animation: shadowDeskSettle 0.70s cubic-bezier(0.25, 1, 0.35, 1) 0.18s forwards;
+}
+
+.projects-view.projects-active .laptop-bio .laptop-contact-shadow {
+    animation: shadowDeskSettle 0.70s cubic-bezier(0.25, 1, 0.35, 1) 0.32s forwards;
+}
+
+/* 4. Live Dashboard Animation Overlays */
+.screen-anim-layer {
+    display: none !important;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+}
+
+/* A. KrishiSense Screen Animations */
+.krishi-radar-sweep {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, transparent, #c4b5fd 20%, #a78bfa 50%, #8b5cf6 80%, transparent);
+    box-shadow: 0 0 16px #a78bfa, 0 0 6px #c4b5fd;
+    animation: radarSweep 4.5s ease-in-out infinite;
+}
+
+@keyframes radarSweep {
+    0% {
+        left: -10%;
+        opacity: 0;
+    }
+
+    15% {
+        opacity: 0.85;
+    }
+
+    55% {
+        left: 58%;
+        opacity: 0.95;
+    }
+
+    85% {
+        opacity: 0.85;
+    }
+
+    100% {
+        left: 110%;
+        opacity: 0;
+    }
+}
+
+.krishi-pulse-node {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c4b5fd;
+    box-shadow: 0 0 10px #c4b5fd;
+    animation: nodeGlow 2.5s ease-in-out infinite alternate;
+}
+
+.krishi-pulse-node.node-1 {
+    top: 52%;
+    left: 38%;
+}
+
+.krishi-pulse-node.node-2 {
+    top: 42%;
+    left: 48%;
+    animation-delay: 1.2s;
+}
+
+@keyframes nodeGlow {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: scale(1.4);
+        opacity: 1;
+        box-shadow: 0 0 14px #8b5cf6;
+    }
+}
+
+.krishi-chart-tracker {
+    position: absolute;
+    top: 38%;
+    right: 22%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a78bfa;
+    box-shadow: 0 0 10px #a78bfa;
+    animation: chartBlink 2s ease-in-out infinite alternate;
+}
+
+@keyframes chartBlink {
+    0% {
+        opacity: 0.3;
+        transform: scale(0.7);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.3);
+    }
+}
+
+/* B. NyayVivek Screen Animations */
+.nyay-shimmer-sweep {
+    display: none !important;
+}
+
+.nyay-scales-gleam {
+    position: absolute;
+    top: 26%;
+    right: 41%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 240, 180, 0.95) 0%, rgba(245, 195, 110, 0) 70%);
+    animation: gleamTwinkle 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes gleamTwinkle {
+    0% {
+        transform: scale(0.5);
+        opacity: 0.2;
+    }
+
+    50% {
+        transform: scale(1.4);
+        opacity: 1;
+        box-shadow: 0 0 12px rgba(255, 240, 180, 0.8);
+    }
+
+    100% {
+        transform: scale(0.5);
+        opacity: 0.2;
+    }
+}
+
+.nyay-sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #e0c38c;
+    box-shadow: 0 0 8px #e0c38c;
+    animation: moteFloat 4s ease-in-out infinite alternate;
+}
+
+.nyay-sparkle.sp-1 {
+    top: 40%;
+    left: 32%;
+}
+
+.nyay-sparkle.sp-2 {
+    top: 65%;
+    left: 45%;
+    animation-delay: 2s;
+}
+
+@keyframes moteFloat {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: translateY(-8px) scale(1.2);
+        opacity: 0.9;
+    }
+}
+
+/* C. bioOasis Screen Animations (Calibrated precisely to 68% gauge & specimen card) */
+.bio-gauge-pulse {
+    position: absolute;
+    left: 33.94%;
+    top: 45.14%;
+    width: 7.32%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    border: 2px solid #a3e635;
+    box-shadow: 0 0 10px rgba(163, 230, 53, 0.8), inset 0 0 6px rgba(163, 230, 53, 0.4);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: gaugeRingPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes gaugeRingPulse {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(0.97);
+        opacity: 0.75;
+        box-shadow: 0 0 8px rgba(163, 230, 53, 0.6), inset 0 0 4px rgba(163, 230, 53, 0.3);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 1;
+        box-shadow: 0 0 18px rgba(163, 230, 53, 0.95), inset 0 0 8px rgba(163, 230, 53, 0.6);
+    }
+}
+
+.bio-scan-reticle {
+    position: absolute;
+    top: 13.5%;
+    left: 5.5%;
+    width: 35.5%;
+    height: 48%;
+    border: 1px dashed rgba(163, 230, 53, 0.45);
+    border-radius: 10px;
+    animation: reticleBreathe 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes reticleBreathe {
+    0% {
+        border-color: rgba(163, 230, 53, 0.25);
+    }
+
+    100% {
+        border-color: rgba(163, 230, 53, 0.65);
+        box-shadow: inset 0 0 10px rgba(163, 230, 53, 0.15);
+    }
+}
+
+/* 1. KrishiSense Laptop (Top) - Angled Inward to the Right */
+.laptop-krishi {
+    top: 30px;
+    left: 5vw;
+    width: 300px;
+    max-width: 21vw;
+    transform: translateY(-150px) rotateY(18deg) rotateX(22deg) rotateZ(5deg) scale(0.95);
+    opacity: 0;
+    z-index: 12;
+    will-change: transform, opacity;
+}
+
+/* 2. NyayVivek Laptop (Middle) - Angled Inward to the Left */
+.laptop-nyay {
+    top: 23%;
+    left: 17vw;
+    width: 315px;
+    max-width: 22vw;
+    transform: translateY(-165px) rotateY(-24deg) rotateX(18deg) rotateZ(-5.5deg) scale(0.95);
+    opacity: 0;
+    z-index: 18;
+    will-change: transform, opacity;
+}
+
+/* 3. bioOasis Laptop (Bottom Left) - Dynamic Low-Angle Upward Pitch */
+.laptop-bio {
+    top: 48%;
+    left: 4vw;
+    width: 330px;
+    max-width: 23vw;
+    transform: translateY(-180px) rotateY(-4deg) rotateX(26deg) rotateZ(5.5deg) scale(0.95);
+    opacity: 0;
+    z-index: 24;
+    will-change: transform, opacity;
+}
+
+/* Base visibility when Chapter 02 is active */
+.projects-view.projects-active .laptop-krishi,
+.projects-view.projects-active .laptop-nyay,
+.projects-view.projects-active .laptop-bio {
+    opacity: 1;
+}
+
+/* Smooth Theme-Oriented Papercraft Drop Entrances - Snappy 0.70s Pacing */
+.projects-view.projects-active .laptop-krishi {
+    animation: laptopPaperDropKrishi 0.70s cubic-bezier(0.25, 1, 0.35, 1) 0.04s both;
+}
+
+.projects-view.projects-active .laptop-nyay {
+    animation: laptopPaperDropNyay 0.70s cubic-bezier(0.25, 1, 0.35, 1) 0.18s both;
+}
+
+.projects-view.projects-active .laptop-bio {
+    animation: laptopPaperDropBio 0.70s cubic-bezier(0.25, 1, 0.35, 1) 0.32s both;
+}
+
+/* Ambient idle floating on .laptop-device (Smooth separation of transform concerns) */
+.projects-view.projects-active .laptop-krishi .laptop-device {
+    animation: laptopDeviceFloat1 6.5s ease-in-out 0.85s infinite alternate;
+}
+
+.projects-view.projects-active .laptop-nyay .laptop-device {
+    animation: laptopDeviceFloat2 7s ease-in-out 1.05s infinite alternate;
+}
+
+.projects-view.projects-active .laptop-bio .laptop-device {
+    animation: laptopDeviceFloat3 6.8s ease-in-out 1.25s infinite alternate;
+}
+
+@keyframes laptopDeviceFloat1 {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-7px);
+    }
+}
+
+@keyframes laptopDeviceFloat2 {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes laptopDeviceFloat3 {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-7px);
+    }
+}
+
+/* Physical tilt of .laptop-device when paper ball rolls
+   (Pivots on bottom-left foot, dipping the right side into a clear physical downhill ramp!) */
+.laptop-nyay .laptop-device {
+    transform-origin: 15% 85%;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.laptop-nyay.tilting .laptop-device {
+    /* Bold, natural 5.8-degree physical tilt dipping towards the right */
+    transform: rotateZ(5.8deg) rotateX(12deg) translateY(4px);
+    transition: transform 0.38s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+/* Dashboard UI Layouts */
+.dashboard-ui {
+    height: 100%;
+    padding: 8px 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #f5f5f5;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #0f0d1a;
+}
+
+.db-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 5px;
+}
+
+.db-brand {
+    font-weight: 700;
+    font-size: 11px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.db-brand i {
+    color: #A78BFA;
+}
+
+.db-nav-links {
+    display: flex;
+    gap: 8px;
+    color: #9CA3AF;
+    font-size: 8px;
+}
+
+.db-body {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.db-card {
+    background: #161326;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 6px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.card-header {
+    font-weight: 600;
+    font-size: 9px;
+    color: #E5E7EB;
+}
+
+/* Satellite grid in KrishiSense */
+.satellite-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    flex: 1;
+}
+
+.grid-tile {
+    background: #1f1b33;
+    border-radius: 2px;
+}
+
+.grid-tile.mid {
+    background: #4c1d95;
+}
+
+.grid-tile.high {
+    background: #6d28d9;
+}
+
+.grid-tile.peak {
+    background: #8b5cf6;
+    box-shadow: 0 0 6px #8b5cf6;
+}
+
+.overview-chart {
+    width: 100%;
+    height: 100%;
+}
+
+/* NyayVivek Dashboard */
+.db-hero-text h3 {
+    margin: 2px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.db-hero-text p {
+    margin: 1px 0 4px;
+    font-size: 8px;
+    color: #9CA3AF;
+}
+
+.db-body-nyay {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+}
+
+.nyay-upload-box {
+    flex: 1;
+    border: 1px dashed rgba(196, 181, 253, 0.4);
+    border-radius: 5px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-align: center;
+    background: rgba(196, 181, 253, 0.04);
+}
+
+.nyay-upload-box i {
+    font-size: 14px;
+    color: #C4B5FD;
+}
+
+.nyay-upload-box small {
+    font-size: 7px;
+    color: #6B7280;
+}
+
+.nyay-cases-box {
+    flex: 1.2;
+    background: #161326;
+    border-radius: 5px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cases-hdr {
+    font-weight: 600;
+    font-size: 8.5px;
+    color: #D1D5DB;
+}
+
+.case-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #201b38;
+    padding: 3px 5px;
+    border-radius: 3px;
+    font-size: 7.5px;
+    color: #E5E7EB;
+}
+
+.case-row i {
+    color: #A78BFA;
+    font-size: 7px;
+}
+
+.nyay-justice-silhouette {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    font-size: 32px;
+    color: rgba(196, 181, 253, 0.15);
+    pointer-events: none;
+}
+
+/* bioOasis Dashboard */
+.db-body-bio {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.bio-left-panel {
+    flex: 1.4;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bio-left-panel h4 {
+    margin: 0;
+    font-size: 11px;
+    color: #ffffff;
+}
+
+.bio-left-panel p {
+    margin: 0 0 2px;
+    font-size: 7.5px;
+    color: #9CA3AF;
+}
+
+.bio-products-row {
+    display: flex;
+    gap: 5px;
+}
+
+.bio-product-card {
+    flex: 1;
+    background: #18142b;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+}
+
+.bio-product-card i {
+    color: #A78BFA;
+    font-size: 11px;
+}
+
+.bio-product-card strong {
+    font-size: 8px;
+}
+
+.bio-product-card small {
+    font-size: 6.5px;
+    color: #9CA3AF;
+}
+
+.bio-check-btn {
+    margin-top: 2px;
+    background: #8B5CF6;
+    border: none;
+    color: #ffffff;
+    font-size: 8px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.bio-right-panel {
+    flex: 1;
+    background: #161326;
+    border-radius: 5px;
+    padding: 6px;
+}
+
+.panel-hdr {
+    font-size: 8.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #E5E7EB;
+}
+
+.bio-check-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 7px;
+    color: #9CA3AF;
+}
+
+.bio-check-list li i {
+    color: #A78BFA;
+    margin-right: 3px;
+}
+
+/* Purple Tape Labels & Unboxed Floating Architectural Notes */
+.project-tape {
+    position: absolute;
+    z-index: 26;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 250px;
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.tape-strip {
+    background: #C4B5FD;
+    color: #1e1035;
+    padding: 3px 18px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.6rem;
+    font-weight: 700;
+    width: max-content;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    clip-path: polygon(4px 0%, 100% 2px, calc(100% - 4px) 100%, 0% calc(100% - 2px));
+    line-height: 1.1;
+    margin: 0;
+    transform: rotate(-1.5deg);
+    user-select: none;
+    letter-spacing: 0.5px;
+}
+
+.tape-desc {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 1.2px;
+    color: #E2E8F0;
+    line-height: 1.45;
+    margin: 7px 0 0 0;
+    font-weight: 400;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+/* Tape Positions matching Mockup */
+.tape-krishi {
+    top: 25px;
+    left: 28.5vw;
+    transform: rotate(2deg);
+}
+
+.tape-nyay {
+    top: 22%;
+    left: 36vw;
+    transform: rotate(-2deg);
+}
+
+.tape-bio {
+    top: 63%;
+    left: 30vw;
+    transform: rotate(1.5deg);
+}
+
+/* Tape Badges Washi Tape Slap-Down entrance when each laptop lands */
+.projects-view.projects-active .tape-krishi {
+    animation: washiTapeSlap 0.45s cubic-bezier(0.25, 1, 0.35, 1) 0.68s forwards;
+}
+
+.projects-view.projects-active .tape-nyay {
+    animation: washiTapeSlap 0.45s cubic-bezier(0.25, 1, 0.35, 1) 0.82s forwards;
+}
+
+.projects-view.projects-active .tape-bio {
+    animation: washiTapeSlap 0.45s cubic-bezier(0.25, 1, 0.35, 1) 0.96s forwards;
+}
+
+/* ===============================================================
+   DOTTED CHALK LOOPED ARROWS (Clean, Crisp, Dotted & High Visibility)
+   =============================================================== */
+
+.looped-arrow {
+    position: absolute;
+    pointer-events: none;
+    z-index: 27;
+    overflow: visible;
+    filter: drop-shadow(0 0 5px rgba(216, 180, 254, 0.75)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+    opacity: 0;
+    will-change: transform, opacity;
+}
+
+.looped-arrow .arrow-path {
+    stroke: #E9D5FF;
+    stroke-width: 2.8px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 2 7;
+    /* Clean, perfectly spaced round dots! */
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+
+.looped-arrow .arrow-head {
+    stroke: #FFFFFF;
+    stroke-width: 2.8px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+
+/* Individual placement and playful breathing motion */
+.arrow-krishi {
+    top: 38px;
+    left: 20vw;
+    width: 8vw;
+    min-width: 95px;
+    max-width: 130px;
+    height: 56px;
+    transform: rotate(-4deg);
+}
+
+.arrow-nyay {
+    top: 25%;
+    left: 29.5vw;
+    width: 8vw;
+    min-width: 95px;
+    max-width: 130px;
+    height: 65px;
+    transform: rotate(3deg);
+}
+
+.arrow-bio {
+    top: 57%;
+    left: 22vw;
+    width: 8.5vw;
+    min-width: 95px;
+    max-width: 135px;
+    height: 68px;
+    transform: rotate(4deg);
+}
+
+/* Looped chalk arrows sketch into place when each laptop lands */
+.projects-view.projects-active .arrow-krishi {
+    animation:
+        chalkArrowSketch 0.50s cubic-bezier(0.16, 1, 0.3, 1) 0.78s forwards,
+        arrowFloat1 5s ease-in-out 1.35s infinite alternate;
+}
+
+.projects-view.projects-active .arrow-nyay {
+    animation:
+        chalkArrowSketch 0.50s cubic-bezier(0.16, 1, 0.3, 1) 0.92s forwards,
+        arrowFloat2 5.5s ease-in-out 1.50s infinite alternate;
+}
+
+.projects-view.projects-active .arrow-bio {
+    animation:
+        chalkArrowSketch 0.50s cubic-bezier(0.16, 1, 0.3, 1) 1.06s forwards,
+        arrowFloat3 5.2s ease-in-out 1.65s infinite alternate;
+}
+
+@keyframes arrowFloat1 {
+    0% {
+        transform: rotate(-4deg) translateY(0);
+    }
+
+    100% {
+        transform: rotate(-2deg) translateY(-4px);
+    }
+}
+
+@keyframes arrowFloat2 {
+    0% {
+        transform: rotate(3deg) translateY(0);
+    }
+
+    100% {
+        transform: rotate(5deg) translateY(-4px);
+    }
+}
+
+@keyframes arrowFloat3 {
+    0% {
+        transform: rotate(-3deg) translateY(0);
+    }
+
+    100% {
+        transform: rotate(-1deg) translateY(-5px);
+    }
+}
+
+/* ===============================================================
+   PROJECT SHOWCASE INDIVIDUAL FALL & SIDEBAR ENTRANCE KEYFRAMES
+   =============================================================== */
+
+@keyframes laptopPaperDropKrishi {
+    0% {
+        transform: translateY(-150px) rotateY(18deg) rotateX(22deg) rotateZ(5deg) scale(0.95);
+        opacity: 0;
+        filter: drop-shadow(0 35px 25px rgba(0, 0, 0, 0.15));
+    }
+    30% {
+        opacity: 1;
+    }
+    85% {
+        /* Soft tactile touch-down cushion onto desk */
+        transform: translateY(3px) rotateY(18deg) rotateX(12.5deg) rotateZ(2.2deg) scale(1.006);
+    }
+    100% {
+        transform: translateY(0) rotateY(18deg) rotateX(13deg) rotateZ(2.5deg) scale(1);
+        opacity: 1;
+        filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.65));
+    }
+}
+
+@keyframes laptopPaperDropNyay {
+    0% {
+        transform: translateY(-165px) rotateY(-24deg) rotateX(18deg) rotateZ(-5.5deg) scale(0.95);
+        opacity: 0;
+        filter: drop-shadow(0 35px 25px rgba(0, 0, 0, 0.15));
+    }
+    30% {
+        opacity: 1;
+    }
+    85% {
+        transform: translateY(3px) rotateY(-24deg) rotateX(9.5deg) rotateZ(-1.8deg) scale(1.006);
+    }
+    100% {
+        transform: translateY(0) rotateY(-24deg) rotateX(10deg) rotateZ(-2deg) scale(1);
+        opacity: 1;
+        filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.65));
+    }
+}
+
+@keyframes laptopPaperDropBio {
+    0% {
+        transform: translateY(-180px) rotateY(-4deg) rotateX(26deg) rotateZ(5.5deg) scale(0.95);
+        opacity: 0;
+        filter: drop-shadow(0 35px 25px rgba(0, 0, 0, 0.15));
+    }
+    30% {
+        opacity: 1;
+    }
+    85% {
+        transform: translateY(3px) rotateY(-4deg) rotateX(18.5deg) rotateZ(2.2deg) scale(1.006);
+    }
+    100% {
+        transform: translateY(0) rotateY(-4deg) rotateX(19deg) rotateZ(2.5deg) scale(1);
+        opacity: 1;
+        filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.65));
+    }
+}
+
+@keyframes shadowDeskSettle {
+    0% {
+        transform: rotateX(65deg) scale(0.55);
+        opacity: 0;
+        filter: blur(18px);
+    }
+    35% {
+        opacity: 0.3;
+        filter: blur(14px);
+    }
+    85% {
+        transform: rotateX(65deg) scale(1.05);
+        opacity: 0.85;
+        filter: blur(7px);
+    }
+    100% {
+        transform: rotateX(65deg) scale(1);
+        opacity: 0.72;
+        filter: blur(8px);
+    }
+}
+
+@keyframes washiTapeSlap {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) rotate(-5deg) scale(1.08);
+        filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.2));
+    }
+    65% {
+        opacity: 1;
+        transform: translateY(2px) rotate(1deg) scale(0.98);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    }
+    88% {
+        transform: translateY(-1px) rotate(-0.5deg) scale(1.01);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+        filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));
+    }
+}
+
+@keyframes chalkArrowSketch {
+    0% {
+        opacity: 0;
+        transform: scale(0.88);
+        filter: drop-shadow(0 0 2px rgba(216, 180, 254, 0.2));
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.03);
+        filter: drop-shadow(0 0 7px rgba(216, 180, 254, 0.85)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: drop-shadow(0 0 5px rgba(216, 180, 254, 0.75)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+    }
+}
+
+@keyframes sidebarSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-35px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes headingRevealUp {
+    0% {
+        opacity: 0;
+        transform: translateY(32px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes underlineChalkDraw {
+    0% {
+        transform: scaleX(0) rotate(-1.5deg);
+        transform-origin: left center;
+        opacity: 0;
+    }
+    100% {
+        transform: scaleX(1) rotate(-1.5deg);
+        transform-origin: left center;
+        opacity: 0.9;
+    }
+}
+
+@keyframes navItemCascade {
+    0% {
+        opacity: 0;
+        transform: translateX(-28px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes ctaButtonPop {
+    0% {
+        opacity: 0;
+        transform: translateY(18px) scale(0.92);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.03);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Sidebar hover spotlight on corresponding laptop */
+.projects-stage.focus-krishi .laptop-wrapper:not(.laptop-krishi),
+.projects-stage.focus-nyay .laptop-wrapper:not(.laptop-nyay),
+.projects-stage.focus-bio .laptop-wrapper:not(.laptop-bio) {
+    opacity: 0.45;
+    filter: brightness(0.72) saturate(0.75);
+    transition: opacity .4s ease, filter .4s ease;
+}
+
+.projects-stage.focus-krishi .laptop-krishi,
+.projects-stage.focus-nyay .laptop-nyay,
+.projects-stage.focus-bio .laptop-bio {
+    opacity: 1 !important;
+    filter: brightness(1.1) saturate(1.1);
+    box-shadow: 0 25px 60px rgba(196, 181, 253, 0.4);
+    z-index: 40 !important;
+    transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .laptop-krishi,
+    .laptop-nyay,
+    .laptop-bio,
+    .project-tape,
+    .looped-arrow,
+    .projects-sidebar .projects-chapter,
+    .projects-sidebar .projects-heading,
+    .projects-sidebar .chalk-underline,
+    .projects-sidebar .projects-subheading,
+    .projects-sidebar .project-nav-item,
+    .projects-sidebar .projects-cta-btn {
+        opacity: 1 !important;
+        transform: none !important;
+        animation: none !important;
+    }
+}
+
+@media(max-width:1200px) {
+    .arrow-krishi {
+        left: 21vw;
+        width: 8.5vw;
+        min-width: 90px;
+    }
+
+    .arrow-nyay {
+        left: 32vw;
+        width: 8.5vw;
+        min-width: 90px;
+    }
+
+    .arrow-bio {
+        left: 24vw;
+        width: 9vw;
+        min-width: 95px;
+    }
+}
+
+@media(max-width:768px) {
+    .looped-arrow {
+        display: none;
+    }
+}
+
+/* ===============================================================
+   INTERACTIVE ROLLING & BOUNCING PAPER BALL
+   (Resting on and rolling directly along top border of NyayVivek laptop)
+   =============================================================== */
+
+.interactive-paper-ball {
+    position: absolute;
+    top: -38px;
+    left: 175px;
+    z-index: 60;
+    width: 56px;
+    height: 56px;
+    cursor: pointer;
+    user-select: none;
+    pointer-events: auto;
+    will-change: transform;
+}
+
+.ball-sprite {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.65));
+    will-change: transform;
+}
+
+.ball-ground-shadow {
+    position: absolute;
+    bottom: -8px;
+    left: 8px;
+    width: 40px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 70%);
+    opacity: 0;
+    transition: opacity .4s ease;
+    pointer-events: none;
+}
+
+/* 1. Accelerating downhill roll over top-right corner edge */
+.interactive-paper-ball.is-rolling {
+    animation: ballRollAcrossLid 0.52s cubic-bezier(0.38, 0.04, 0.55, 0.98) forwards !important;
+}
+
+@keyframes ballRollAcrossLid {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    45% {
+        transform: translate(45px, 2px) rotate(90deg);
+    }
+
+    78% {
+        transform: translate(92px, 6px) rotate(190deg);
+    }
+
+    100% {
+        /* Reaches corner with full forward momentum, slightly tipped downward over the bevel */
+        transform: translate(125px, 12px) rotate(260deg);
+    }
+}
+
+/* 2. Seamless projectile gravity arc off the corner edge to floor */
+.interactive-paper-ball.is-falling {
+    animation: ballGravityFall 0.65s cubic-bezier(0.32, 0.72, 0.55, 1) forwards !important;
+}
+
+@keyframes ballGravityFall {
+    0% {
+        transform: translate(125px, 12px) rotate(260deg);
+    }
+
+    26% {
+        /* Natural parabolic curvature: rightward momentum carries it into free space */
+        transform: translate(150px, 75px) rotate(340deg);
+    }
+
+    62% {
+        /* Accelerating downward under gravity */
+        transform: translate(168px, 235px) rotate(425deg);
+    }
+
+    100% {
+        /* Impacts floor clear off the right corner */
+        transform: translate(175px, 440px) rotate(490deg);
+    }
+}
+
+/* Perched near the right edge of laptop lid with an eager, playful hop */
+.interactive-paper-ball.perched {
+    animation: ballPerchedPlayfulBounce 2.3s cubic-bezier(0.28, 0.84, 0.42, 1) infinite !important;
+}
+
+@keyframes ballPerchedPlayfulBounce {
+
+    0%,
+    35%,
+    100% {
+        transform: translateY(0) scale(1.06, 0.94);
+    }
+
+    12% {
+        transform: translateY(-10px) scale(0.96, 1.05) rotate(6deg);
+    }
+
+    20% {
+        transform: translateY(0) scale(1.08, 0.92);
+    }
+
+    26% {
+        transform: translateY(-4px) scale(0.98, 1.02) rotate(2deg);
+    }
+
+    30% {
+        transform: translateY(0) scale(1.04, 0.96);
+    }
+}
+
+.interactive-paper-ball:hover .ball-sprite {
+    transform: scale(1.10) rotate(-6deg);
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
+    transition: transform .25s ease, filter .25s ease;
+}
+
+/* 3. Lively continuous floor bounce directly under right corner */
+.interactive-paper-ball.is-bouncing {
+    animation: ballRhythmicBounce 1.25s cubic-bezier(0.28, 0.84, 0.42, 1) infinite !important;
+}
+
+@keyframes ballRhythmicBounce {
+
+    0%,
+    100% {
+        transform: translate(175px, 440px) scale(1.12, 0.88);
+    }
+
+    45% {
+        transform: translate(175px, 404px) scale(0.92, 1.08) rotate(12deg);
+    }
+}
+
+.interactive-paper-ball.is-bouncing .ball-ground-shadow {
+    opacity: 0.85;
+    animation: shadowCutePulse 1.25s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+}
+
+@keyframes shadowCutePulse {
+
+    0%,
+    100% {
+        transform: scale(1.25);
+        opacity: .85;
+    }
+
+    45% {
+        transform: scale(0.65);
+        opacity: .3;
+    }
+}
+
+/* 4. Spring jump when clicked */
+.interactive-paper-ball.is-unfolding {
+    animation: ballPopUnfold .5s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards !important;
+}
+
+@keyframes ballPopUnfold {
+    0% {
+        transform: translate(168px, 440px) scale(1);
+    }
+
+    50% {
+        transform: translate(168px, 350px) scale(1.35) rotate(45deg);
+    }
+
+    100% {
+        transform: translate(168px, 300px) scale(0.1) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+/* Responsive tweaks for projects showcase */
+@media(max-width:1200px) {
+    .projects-sidebar {
+        width: 270px;
+        gap: 1rem;
+        left: 4vw;
+    }
+
+    .projects-heading {
+        font-size: 3.1rem;
+    }
+
+    .projects-stage {
+        left: 40vw;
+    }
+
+    .laptop-krishi {
+        width: 290px;
+    }
+
+    .laptop-nyay {
+        width: 310px;
+    }
+
+    .laptop-bio {
+        width: 330px;
+    }
+
+    .tape-card {
+        width: 220px;
+        padding: 8px 12px 10px;
+    }
+
+    .tape-strip {
+        font-size: 1.35rem;
+    }
+
+    .tape-desc {
+        font-size: .72rem;
+    }
+}
+
+/* ===============================================================
+   REALISTIC WASHI TAPES ON HERO PORTRAIT (Distinct Color & Patterns)
+   =============================================================== */
+
+.washi-tape {
+    position: absolute;
+    pointer-events: none;
+    z-index: 4;
+    box-shadow:
+        0 5px 16px rgba(0, 0, 0, 0.45),
+        inset 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+/* 1. Right Washi Tape - Warm Antique Honey Cream Masking Tape with Organic Rough Torn Edges */
+.washi-tape-right {
+    bottom: 17%;
+    right: 5%;
+    width: 44px;
+    height: 145px;
+    transform: rotate(-22deg);
+    background-color: rgba(246, 236, 212, 0.94);
+    background-image:
+        /* Fine washi paper fiber noise */
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"),
+        /* Longitudinal washi paper fiber threads */
+        repeating-linear-gradient(92deg,
+            rgba(180, 140, 80, 0.16) 0px,
+            rgba(180, 140, 80, 0.16) 1px,
+            transparent 1px,
+            transparent 5px),
+        /* Subtle natural cross-weave texture */
+        repeating-linear-gradient(2deg,
+            rgba(120, 90, 40, 0.08) 0px,
+            rgba(120, 90, 40, 0.08) 1px,
+            transparent 1px,
+            transparent 8px),
+        /* Warm vintage honey-cream masking tape gradient (pops with high contrast off purple paper) */
+        linear-gradient(172deg,
+            rgba(255, 249, 235, 0.98) 0%,
+            rgba(248, 236, 206, 0.93) 35%,
+            rgba(238, 218, 178, 0.94) 75%,
+            rgba(250, 240, 218, 0.96) 100%);
+    /* Asymmetrical, rough, hand-ripped tape edges */
+    clip-path: polygon(0% 13px,
+            6% 8px,
+            13% 15px,
+            21% 4px,
+            27% 10px,
+            34% 3px,
+            42% 9px,
+            51% 2px,
+            59% 12px,
+            68% 6px,
+            76% 14px,
+            85% 7px,
+            93% 13px,
+            100% 5px,
+            99.2% 35%,
+            100% 65%,
+            99% 88%,
+            100% calc(100% - 15px),
+            94% calc(100% - 7px),
+            87% calc(100% - 14px),
+            79% calc(100% - 4px),
+            71% calc(100% - 12px),
+            62% calc(100% - 5px),
+            53% calc(100% - 14px),
+            44% calc(100% - 3px),
+            36% calc(100% - 10px),
+            27% calc(100% - 5px),
+            18% calc(100% - 15px),
+            9% calc(100% - 8px),
+            0% calc(100% - 3px),
+            0.8% 78%,
+            0% 48%,
+            0.6% 22%);
+    filter:
+        drop-shadow(0 8px 18px rgba(0, 0, 0, 0.65)) drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+    border-left: 1px solid rgba(255, 255, 255, 0.7);
+    border-right: 1px solid rgba(140, 105, 50, 0.28);
+}
+
+/* 2. Left Washi Tape - Warm Cream/Kraft with Architectural Graph Grid Pattern */
+.washi-tape-left {
+    bottom: 6%;
+    left: 12%;
+    width: 125px;
+    height: 38px;
+    transform: rotate(-10deg);
+    background-color: rgba(244, 235, 218, 0.88);
+    background-image:
+        repeating-linear-gradient(0deg,
+            rgba(145, 110, 75, 0.22) 0px,
+            rgba(145, 110, 75, 0.22) 1px,
+            transparent 1px,
+            transparent 9px),
+        repeating-linear-gradient(90deg,
+            rgba(145, 110, 75, 0.22) 0px,
+            rgba(145, 110, 75, 0.22) 1px,
+            transparent 1px,
+            transparent 9px),
+        linear-gradient(135deg,
+            rgba(250, 244, 232, 0.92) 0%,
+            rgba(240, 228, 208, 0.86) 55%,
+            rgba(225, 210, 185, 0.9) 100%);
+    clip-path: polygon(5px 0%,
+            28% 0.5%,
+            68% 0%,
+            calc(100% - 14px) 0%,
+            calc(100% - 7px) 14%,
+            calc(100% - 15px) 28%,
+            calc(100% - 3px) 44%,
+            calc(100% - 12px) 58%,
+            calc(100% - 4px) 74%,
+            calc(100% - 14px) 88%,
+            calc(100% - 2px) 100%,
+            70% 99.5%,
+            38% 100%,
+            12px 100%,
+            6px 85%,
+            15px 70%,
+            4px 54%,
+            11px 38%,
+            3px 22%,
+            13px 10%,
+            5px 0%);
+    filter:
+        drop-shadow(0 5px 12px rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+    border-top: 1px solid rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid rgba(120, 80, 40, 0.22);
+}
+
+@media(max-width:1200px) {
+    .washi-tape-right {
+        width: 36px;
+        height: 110px;
+        right: 3%;
+    }
+
+    .washi-tape-left {
+        width: 100px;
+        height: 32px;
+        left: 8%;
+    }
+}
+
+@media(max-width:768px) {
+    .washi-tape-right {
+        width: 28px;
+        height: 85px;
+        right: 4%;
+        bottom: 10%;
+    }
+
+    .washi-tape-left {
+        width: 80px;
+        height: 26px;
+        left: 6%;
+        bottom: 4%;
+    }
 }
