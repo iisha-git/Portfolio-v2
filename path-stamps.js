@@ -1,70 +1,101 @@
-const path = document.querySelector(".dashed-path");
 const heroEl = document.querySelector(".hero");
+const svgEl = document.querySelector(".plane-path");
+const heroContentEl = document.querySelector(".hero-content");
+const baseRoute = document.getElementById("baseGroundRoute") || document.querySelector(".dashed-path");
 
-// pos = point along the dashed route (0-1) where that stamp's dot belongs.
-// the label is then shifted so its dot sits exactly on that point.
+// Calibrated milestone positions along the 2272px route (plane at -142, -84, path starts at -80, -1)
 const stamps = [
-    {
-        el: document.querySelector(".stamp-1"),
-        pos: 0.025
-    },
-    {
-        el: document.querySelector(".stamp-2"),
-        pos: 0.138
-    },
-    {
-        el: document.querySelector(".stamp-3"),
-        pos: 0.360
-    },
-    {
-        el: document.querySelector(".stamp-4"),
-        pos: 0.498
-    },
-    {
-        el: document.querySelector(".stamp-5"),
-        pos: 0.542
-    }
+    { el: document.querySelector(".stamp-1"), pos: 0.085 }, // Started Building (below airplane, before loop)
+    { el: document.querySelector(".stamp-2"), pos: 0.205 }, // Down the Rabbit Hole (upper top-right of loop)
+    { el: document.querySelector(".stamp-3"), pos: 0.400 }, // What's beyond design (at the curve point)
+    { el: document.querySelector(".stamp-4"), pos: 0.544 }, // NIFT 2024 (at the curve point)
+    { el: document.querySelector(".stamp-5"), pos: 0.600 }  // Aiming for NIFT (shifted more left)
 ];
 
+let needsStampRecompute = false;
+let hasPlacedOnce = false;
+
 function placeStamps() {
+    if (!heroEl || !svgEl || !baseRoute) return;
 
-    // while the scroll zoom is active the hero is scaled, so screen and
-    // local coordinates don't match - leave the stamps where they are
-    if (heroEl.style.transform) return;
+    // Never calculate if hero or heroContent or svgEl is hidden or not laid out
+    if (heroEl.classList.contains("projects-view-active")) {
+        needsStampRecompute = true;
+        return;
+    }
 
-    const totalLength = path.getTotalLength();
-    const ctm = path.getScreenCTM();
+    if (heroContentEl) {
+        if (heroContentEl.style.display === "none" || heroContentEl.style.visibility === "hidden") {
+            needsStampRecompute = true;
+            return;
+        }
+        const cs = window.getComputedStyle(heroContentEl);
+        if (cs.display === "none" || cs.visibility === "hidden") {
+            needsStampRecompute = true;
+            return;
+        }
+    }
+
+    const parent = stampParent();
+    const parentRect = parent.getBoundingClientRect();
+    const svgRect = svgEl.getBoundingClientRect();
+
+    if (!svgRect.width || !svgRect.height || svgRect.width < 100) {
+        needsStampRecompute = true;
+        return;
+    }
+
+    // Sanity check: .plane-path has left: 30%. If layout tree hasn't applied the offset, never overwrite coordinates.
+    if (parentRect.width > 500 && (svgRect.left - parentRect.left) < (parentRect.width * 0.15)) {
+        needsStampRecompute = true;
+        return;
+    }
+
+    const totalLength = baseRoute.getTotalLength();
+    if (!totalLength) return;
+
+    const ctm = svgEl.getScreenCTM();
+    if (!ctm) return;
 
     stamps.forEach(stamp => {
+        if (!stamp.el) return;
 
-        const point = path.getPointAtLength(
-            totalLength * stamp.pos
-        );
-
+        const point = baseRoute.getPointAtLength(totalLength * stamp.pos);
         const target = new DOMPoint(point.x, point.y).matrixTransform(ctm);
 
-        stamp.el.style.left = `${target.x}px`;
-        stamp.el.style.top = `${target.y}px`;
-
-        // shift the whole stamp so the dot - not the text - lands on
-        // the route point, at every viewport width
-        const dot = stamp.el.querySelector(".stamp-dot");
-        const dotRect = dot.getBoundingClientRect();
-
-        if (!dotRect.width) return;
-
-        const dotX = dotRect.left + dotRect.width / 2;
-        const dotY = dotRect.top + dotRect.height / 2;
-
-        stamp.el.style.left =
-            `${parseFloat(stamp.el.style.left) + target.x - dotX}px`;
-
-        stamp.el.style.top =
-            `${parseFloat(stamp.el.style.top) + target.y - dotY}px`;
+        // Position the stamp container so its origin (0, 0) is centered right on the route point
+        stamp.el.style.left = `${(target.x - parentRect.left - (parent.clientLeft || 0)).toFixed(1)}px`;
+        stamp.el.style.top = `${(target.y - parentRect.top - (parent.clientTop || 0)).toFixed(1)}px`;
     });
+
+    needsStampRecompute = false;
+    hasPlacedOnce = true;
+}
+
+function stampParent() {
+    const firstStamp = stamps.find(s => s.el);
+    return (firstStamp && firstStamp.el.offsetParent) || heroEl;
 }
 
 window.placeStamps = placeStamps;
 
+// Safe recompute when returning from hidden section (only if resized while hidden or never placed)
+window.checkStampRecompute = function() {
+    if (needsStampRecompute || !hasPlacedOnce) {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                placeStamps();
+            });
+        });
+    }
+};
+
+// Position stamps immediately and on every layout/font lifecycle event
+placeStamps();
 window.addEventListener("load", placeStamps);
-window.addEventListener("resize", placeStamps);
+window.addEventListener("resize", () => {
+    placeStamps();
+});
+if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(placeStamps);
+}
