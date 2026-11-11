@@ -201,7 +201,7 @@ a {
 }
 
 .hero-wrapper {
-    height: 500vh;
+    height: 600vh;
     position: relative;
 }
 
@@ -228,15 +228,15 @@ html {
 }
 
 .snap-b {
-    top: 100vh;
+    top: 160vh;
 }
 
 .snap-c {
-    top: 300vh;
+    top: 360vh;
 }
 
 .snap-d {
-    top: 420vh;
+    top: 480vh;
 }
 
 .hero-heading {
@@ -259,6 +259,7 @@ html {
     letter-spacing: 2px;
     text-transform: uppercase;
     font-size: .95rem;
+    margin-top: 0 !important;
     margin-bottom: 20px;
 }
 
@@ -380,6 +381,9 @@ html {
     pointer-events: auto;
     cursor: pointer;
     will-change: transform;
+}
+
+.doodle-item:hover {
     transition: transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), filter .25s ease;
 }
 
@@ -567,19 +571,7 @@ html {
 
 .hero-copy,
 .hero-image {
-    transition:
-        transform .8s ease,
-        opacity .8s ease;
-}
-
-.hero.slide .hero-copy {
-    transform: translateX(-350px);
-    opacity: 0;
-}
-
-.hero.slide .hero-image {
-    transform: translateX(350px);
-    opacity: 0;
+    transition: none !important;
 }
 
 /* Hard guard: First page root elements & cutouts MUST NEVER overlap subsequent stages (exclude paper-tear clones) */
@@ -592,6 +584,13 @@ html {
 .hero.scrolled-past-home .paper-tear,
 .hero.scrolled-past-home .hero-paper-surface,
 .hero.scrolled-past-home .corner-paper-scrap,
+.hero.is-tearing > .hero-paper-surface,
+.hero.is-tearing > .hero-content > .hero-copy,
+.hero.is-tearing > .hero-image,
+.hero.is-tearing .head-doodles:not(.paper-tear *),
+.hero.is-tearing .doodle-item:not(.paper-tear *),
+.hero.is-tearing .washi-tape:not(.paper-tear *),
+.hero.is-tearing .paper-cutout-backing:not(.paper-tear *),
 .hero.about-view > .hero-content > .hero-copy,
 .hero.about-view > .hero-image,
 .hero.about-view .head-doodles:not(.paper-tear *),
@@ -671,7 +670,7 @@ html {
     }
 
     .hero-tag {
-        margin: auto auto 20px;
+        margin: 0 auto 20px !important;
         letter-spacing: 3px;
         font-size: .7rem;
     }
@@ -1377,6 +1376,7 @@ html {
     inset: 0;
     z-index: 1;
     pointer-events: none;
+    overflow: hidden;
     box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85);
 }
 
@@ -1387,12 +1387,6 @@ html {
     transform-origin: center center;
     backface-visibility: hidden;
     will-change: transform, opacity;
-
-    /* Deep paper casting shadow as it tears apart */
-    box-shadow:
-        0 16px 50px rgba(0, 0, 0, 0.95),
-        0 4px 14px rgba(0, 0, 0, 0.8),
-        inset 0 0 80px rgba(0, 0, 0, 0.7);
 
     /* keeps the ragged cut from showing a hairline seam */
     outline: 1px solid transparent;
@@ -1410,9 +1404,7 @@ html {
 .paper-clone * {
     pointer-events: none !important;
     transition: none !important;
-    animation: none !important;
     -webkit-transition: none !important;
-    -webkit-animation: none !important;
 }
 
 /* Ensure content on tearing paper halves remains 100% visible and travels with the paper */
@@ -1466,6 +1458,7 @@ html {
 }
 
 /* crumpled paper highlights, pre-rendered so scrolling stays cheap */
+.hero-paper-surface::before,
 .paper-half::before {
     content: "";
     position: absolute;
@@ -1478,10 +1471,11 @@ html {
     background-size: 420px 420px;
 
     mix-blend-mode: soft-light;
-    opacity: var(--paper-crinkle);
+    opacity: var(--paper-crinkle, 0.22);
 }
 
 /* fine white paper fibre dust */
+.hero-paper-surface::after,
 .paper-half::after {
     content: "";
     position: absolute;
@@ -1494,7 +1488,7 @@ html {
     background-size: 180px 180px;
 
     mix-blend-mode: screen;
-    opacity: var(--paper-grain);
+    opacity: var(--paper-grain, 0.16);
 }
 
 /* authentic torn paper deckle edge */
@@ -1511,18 +1505,12 @@ html {
 
 .paper-half .tear-line polyline {
     fill: none;
-
     stroke: #ffffff;
-    stroke-width: 2.8;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
-
     vector-effect: non-scaling-stroke;
-
-    filter:
-        drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))
-        drop-shadow(0 0 1px #ffffff)
-        drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.85));
 }
 
 .paper-dust {

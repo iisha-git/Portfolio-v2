@@ -12,6 +12,9 @@ const dashedPath = document.getElementById("mainDashedPath") || document.querySe
 const flightTrailPath = document.getElementById("flightTrailPath");
 const journeyStamps = document.querySelectorAll(".journey-stamp");
 const routeMaskPath = document.getElementById("routeMaskPath");
+const heroPaperSurface = document.querySelector(".hero-paper-surface");
+const cornerScrap = document.querySelector(".corner-paper-scrap");
+const planePath = document.querySelector(".plane-path");
 let maskTotalLength = 0;
 
 const BASE_GROUND_BODY = "c 99 57 68 62 173 83 c 79 -7 78.8 -78.6 28.9 -103.6 c -46.9 -21.8 -104.9 5.7 -93.2 64.7 c 20.3 96.4 294.2 121.7 142 267.1 c -250.2 172.4 -170.7 233.8 47.4 243.4 c 284 5.1 476 -67.6 712.8 253.1";
@@ -55,14 +58,14 @@ function measureStage() {
     ZOOM.width         = hero.clientWidth;
 
     // Stage 1: Home (0 - 100vh)
-    // Stage 2: About / Journey (100vh - 200vh)
-    // Stage 2.5: Airplane & Path Leaving (200vh - 285vh) -> Unhurried, noticeable exit
-    // Stage 3: Projects Showcase (290vh - 400vh)
-    // Stage 4: 3D Paper Uncrumple (395vh - 500vh)
-    ZOOM.projectsStart = screen * 2.90;
-    ZOOM.projectsEnd   = screen * 4.00;
-    ZOOM.slideStart    = screen * 3.95;
-    ZOOM.slideSpan     = Math.min(screen * 0.95, 900);
+    // Stage 2: About / Journey (80vh - 235vh) -> Generous reading hold (~900px scroll)
+    // Stage 2.5: Airplane & Path Leaving (235vh - 355vh) -> Unhurried, clearly noticeable cinematic disappearance
+    // Stage 3: Projects Showcase (355vh - 480vh)
+    // Stage 4: 3D Paper Uncrumple (475vh - 600vh)
+    ZOOM.projectsStart = screen * 3.55;
+    ZOOM.projectsEnd   = screen * 4.80;
+    ZOOM.slideStart    = screen * 4.75;
+    ZOOM.slideSpan     = Math.min(screen * 1.05, 950);
 
     const firstSnap = document.querySelector(".snap-a");
     ZOOM.rest = firstSnap
@@ -143,10 +146,6 @@ function setSlideTarget(progress) {
 // ---------------------------------------------------------------
 
 let tear = null;
-let targetTear = 0;
-let displayTear = 0;
-let tearFrame = 0;
-let lastTearTime = 0;
 let resizeTimer = null;
 let cachedHeroRects = null;
 
@@ -154,7 +153,7 @@ function clamp01(value) {
     return Math.min(Math.max(value, 0), 1);
 }
 
-// a fixed, hand-drawn looking jagged edge down the middle of the sheet
+// Original hand-drawn jagged edge down the middle of the sheet
 function tearEdgePoints() {
 
     const points = [];
@@ -196,7 +195,11 @@ function buildTear() {
         imageRect = cachedHeroRects.imageRect;
     } else {
         const wasHidden = heroCopy.style.visibility === "hidden" || heroCopy.style.opacity === "0";
+        const wasTearing = hero.classList.contains("is-tearing");
 
+        if (wasTearing) {
+            hero.classList.remove("is-tearing");
+        }
         if (wasHidden) {
             heroCopy.style.visibility = "visible";
             heroCopy.style.opacity = "1";
@@ -212,6 +215,9 @@ function buildTear() {
             cachedHeroRects = { base, copyRect, imageRect };
         }
 
+        if (wasTearing) {
+            hero.classList.add("is-tearing");
+        }
         if (wasHidden) {
             heroCopy.style.visibility = "hidden";
             heroCopy.style.opacity = "0";
@@ -285,11 +291,6 @@ function buildTear() {
             clone.style.visibility = "visible";
             clone.style.display = "";
             clone.style.transition = "none";
-            clone.style.animation = "none";
-
-            clone.querySelectorAll("img, image").forEach(img => {
-                img.style.animation = "none";
-            });
 
             half.appendChild(clone);
             filters.push(clone);
@@ -338,21 +339,16 @@ function buildTear() {
         filtered: false
     };
 
-    applyTear(displayTear);
+    applyTear(0);
 }
 
 function applyTear(progress) {
 
     progress = clamp01(progress);
 
-    const heroPaperSurface = document.querySelector(".hero-paper-surface");
-    const cornerScrap = document.querySelector(".corner-paper-scrap");
-    const planePath = document.querySelector(".plane-path");
-    const journeyStamps = document.querySelectorAll(".journey-stamp");
-
     // No cloned sheet (reduced motion / very early load): plain fade.
     if (!tear) {
-        const visible = progress <= 0.002;
+        const visible = progress <= 0.001;
         heroCopy.style.opacity = visible ? "1" : String(1 - progress);
         heroImage.style.opacity = visible ? "1" : String(1 - progress);
         heroCopy.style.visibility = visible ? "visible" : "hidden";
@@ -368,23 +364,43 @@ function applyTear(progress) {
         return;
     }
 
-    if (progress <= 0.002) {
+    if (progress <= 0.001) {
         tear.active = false;
+        hero.classList.remove("is-tearing");
+        if (tear.halves) {
+            const [left, right] = tear.halves;
+            left.style.transform = "none";
+            right.style.transform = "none";
+            left.style.opacity = "1";
+            right.style.opacity = "1";
+        }
+        if (tear.lines) {
+            tear.lines.forEach(l => {
+                l.style.opacity = "0";
+            });
+        }
+        if (tear.dust) {
+            tear.dust.style.opacity = "0";
+        }
         if (heroPaperSurface) {
             heroPaperSurface.style.visibility = "visible";
             heroPaperSurface.style.opacity = "1";
+            heroPaperSurface.style.display = "";
         }
         heroCopy.style.visibility = "visible";
         heroCopy.style.opacity = "1";
+        heroCopy.style.display = "";
         heroCopy.style.pointerEvents = "";
 
         heroImage.style.visibility = "visible";
         heroImage.style.opacity = "1";
+        heroImage.style.display = "";
         heroImage.style.pointerEvents = "";
 
         if (cornerScrap) {
             cornerScrap.style.visibility = "visible";
             cornerScrap.style.opacity = "1";
+            cornerScrap.style.display = "";
             cornerScrap.style.transform = "";
         }
         if (planePath) {
@@ -404,6 +420,7 @@ function applyTear(progress) {
 
     if (progress >= 0.88) {
         tear.active = false;
+        hero.classList.remove("is-tearing");
         if (heroPaperSurface) {
             heroPaperSurface.style.visibility = "hidden";
             heroPaperSurface.style.opacity = "0";
@@ -437,8 +454,9 @@ function applyTear(progress) {
         return;
     }
 
-    // Actively tearing (0.002 < progress < 0.88)
+    // Actively tearing (0.001 < progress < 0.88)
     tear.active = true;
+    hero.classList.add("is-tearing");
     if (heroPaperSurface) {
         heroPaperSurface.style.visibility = "hidden";
         heroPaperSurface.style.opacity = "0";
@@ -466,8 +484,8 @@ function applyTear(progress) {
 
     const [left, right] = tear.halves;
 
-    // Physical paper tear kinematics
-    const rip = Math.pow(progress, 0.82);
+    // Original physical paper tear kinematics: jagged cut dividing into 2 parts
+    const rip = Math.pow(progress, 1.2);
 
     left.style.transform =
         `translate3d(${-48 * rip}vw, ${-14 * rip}vh, 0) ` +
@@ -486,6 +504,7 @@ function applyTear(progress) {
     // The top-left corner scrap divides and tears away with the left dividing paper half
     if (cornerScrap) {
         cornerScrap.style.visibility = "visible";
+        cornerScrap.style.display = "";
         cornerScrap.style.transformOrigin = "top left";
         cornerScrap.style.transform =
             `translate3d(${-48 * rip}vw, ${-14 * rip}vh, 0) ` +
@@ -493,62 +512,21 @@ function applyTear(progress) {
         cornerScrap.style.opacity = fade.toFixed(3);
     }
 
-    // Deckle fiber edge appears instantly on tear
-    const lineOpacity = Math.min(progress / 0.04, 1).toFixed(3);
+    // Deckle fiber edge appears smoothly on tear
+    const lineOpacity = Math.min(progress / 0.05, 1).toFixed(3);
     if (tear.lines) {
         tear.lines.forEach(l => {
             l.style.opacity = lineOpacity;
         });
     }
 
-    // Paper fibres, crinkles and subtle dust puff
-    const grain = Math.min(1, progress * 4) * (1 - clamp01((progress - 0.82) / 0.18));
-
-    tear.root.style.setProperty("--paper-grain", (grain * 0.22).toFixed(3));
-    tear.root.style.setProperty("--paper-crinkle", (grain * 0.30).toFixed(3));
-    tear.root.style.setProperty("--paper-wash", (grain * 0.045).toFixed(3));
-
     if (tear.dust) {
-        tear.dust.style.opacity = (Math.sin(Math.PI * Math.min(progress / 0.75, 1)) * 0.45).toFixed(3);
-    }
-}
-
-function animateTear(now) {
-    if (!lastTearTime) lastTearTime = now;
-    const dt = Math.min(now - lastTearTime, 64);
-    lastTearTime = now;
-
-    // High performance smooth exponential easing (~0.18 decay per 16ms frame)
-    const ease = 1 - Math.pow(0.001, dt / 1000);
-    displayTear += (targetTear - displayTear) * ease;
-
-    if (Math.abs(targetTear - displayTear) < 0.001) {
-        displayTear = targetTear;
-    }
-
-    applyTear(displayTear);
-
-    if (displayTear !== targetTear) {
-        tearFrame = requestAnimationFrame(animateTear);
-    } else {
-        tearFrame = 0;
-        lastTearTime = 0;
+        tear.dust.style.opacity = (Math.sin(Math.PI * Math.min(progress / 0.75, 1)) * 0.35).toFixed(3);
     }
 }
 
 function setTearTarget(progress) {
-    targetTear = clamp01(progress);
-
-    if (reduceMotion) {
-        displayTear = targetTear;
-        applyTear(displayTear);
-        return;
-    }
-
-    if (!tearFrame) {
-        lastTearTime = performance.now();
-        tearFrame = requestAnimationFrame(animateTear);
-    }
+    applyTear(clamp01(progress));
 }
 
 // Smooth C1-continuous flight curve matching tangent (-41, -23) with angle -150.71° at (-80, -1)
@@ -640,13 +618,16 @@ function updateScrollStages(scroll) {
         hero.classList.add("scrolled-past-home");
     } else {
         hero.classList.remove("scrolled-past-home");
+        heroCopy.style.display = "";
+        heroImage.style.display = "";
+        if (heroContent) heroContent.style.display = "";
     }
 
     // Stage 1: Hero tear (0 to 100vh)
     setTearTarget((scroll - ZOOM.rest) / stage);
 
     // Stage 2: About view (stamps reveal once tear is clearing and flight begins)
-    if (scroll > stage * 0.80 && scroll <= stage * 2.85) {
+    if (scroll > stage * 0.75 && scroll <= stage * 3.55) {
         hero.classList.add("about-view");
     } else {
         hero.classList.remove("about-view");
@@ -657,7 +638,7 @@ function updateScrollStages(scroll) {
     // - Slide (Paper Unfold / Contact): dark-ink-all (all elements black ink on light paper)
     // - About & Projects: all elements white on dark background
     if (socialRail) {
-        const isSlide = scroll >= (ZOOM.slideStart || stage * 3.90) - 40;
+        const isSlide = scroll >= (ZOOM.slideStart || stage * 4.70) - 40;
         const isHome  = scroll <= stage * 0.85;
         if (isSlide) {
             socialRail.classList.add("dark-ink-all");
@@ -676,20 +657,20 @@ function updateScrollStages(scroll) {
 
     // -------------------------------------------------------------
     // Calibrated Flight & Leaving Timeline:
-    // 1. Takeoff & Flight (0.82vh to 1.70vh): Plane flies from dock to loop & milestones
-    // 2. Journey Hold (1.70vh to 1.95vh): Comfortable reading window
-    // 3. Airplane Climb & Exit (1.95vh to 2.80vh): Plane soars off screen smoothly along curved arc
-    // 4. Ground Route Dissolving (2.00vh to 2.80vh): Route dashes and stamps dissolve unhurriedly
-    // 5. Flight Trail Leaving (2.25vh to 2.85vh): Streamer trail slowly leaves the screen behind plane
+    // 1. Takeoff & Flight (0.80vh to 1.45vh): Plane flies from dock to loop & milestones
+    // 2. Journey Hold (1.45vh to 2.35vh): Generous, comfortable reading window (~900px scroll)
+    // 3. Airplane Climb & Exit (2.35vh to 3.45vh): Plane soars off screen smoothly along curved arc
+    // 4. Ground Route Dissolving (2.40vh to 3.45vh): Route dashes and stamps dissolve unhurriedly
+    // 5. Flight Trail Leaving (2.75vh to 3.55vh): Streamer trail slowly leaves the screen behind plane
     // -------------------------------------------------------------
-    const planeStart      = stage * 0.82;
-    const planeMid        = stage * 1.70;
-    const exitStart       = stage * 1.95;
-    const exitEnd         = stage * 2.80;
-    const pathStart       = stage * 2.00;
-    const pathEnd         = stage * 2.80;
-    const trailExitStart  = stage * 2.25;
-    const trailExitEnd    = stage * 2.85;
+    const planeStart      = stage * 0.80;
+    const planeMid        = stage * 1.45;
+    const exitStart       = stage * 2.35;
+    const exitEnd         = stage * 3.45;
+    const pathStart       = stage * 2.40;
+    const pathEnd         = stage * 3.45;
+    const trailExitStart  = stage * 2.75;
+    const trailExitEnd    = stage * 3.55;
 
     // --- Phase 1 & 2: Airplane flight along smooth curved arc ---
     let planeProgress = 0;
@@ -844,12 +825,6 @@ function updateScrollStages(scroll) {
             projectsView.style.display = "block";
             projectsView.style.pointerEvents = "auto";
 
-            // Guarantee first page elements are completely hidden
-            heroCopy.style.visibility = "hidden";
-            heroCopy.style.display = "none";
-            heroImage.style.visibility = "hidden";
-            heroImage.style.display = "none";
-
             // Trigger rolling paper ball when entering stage 3 - snappy and responsive!
             if (scroll >= ZOOM.projectsStart + 10) {
                 if (paperBallState === "perched" && !ballRollDelayTimer) {
@@ -866,11 +841,9 @@ function updateScrollStages(scroll) {
             projectsView.style.display = "";
             projectsView.style.pointerEvents = "";
 
-            if (scroll >= ZOOM.projectsEnd) {
-                heroCopy.style.visibility = "hidden";
-                heroCopy.style.display = "none";
-                heroImage.style.visibility = "hidden";
-                heroImage.style.display = "none";
+            if (scroll < ZOOM.projectsStart) {
+                heroCopy.style.display = "";
+                heroImage.style.display = "";
             }
 
             if (scroll < ZOOM.projectsStart - 80) {
@@ -1057,10 +1030,8 @@ function syncScrollAndTear() {
     const initialTear = clamp01((window.scrollY - ZOOM.rest) / stage);
 
     // Synchronize tear display directly with current scroll so it never animates from 0 on refresh
-    targetTear = initialTear;
-    displayTear = initialTear;
-
     if (initialTear >= 0.05) {
+        hero.classList.add("is-tearing");
         const heroPaperSurface = document.querySelector(".hero-paper-surface");
         if (heroPaperSurface) {
             heroPaperSurface.style.visibility = "hidden";
@@ -1076,10 +1047,12 @@ function syncScrollAndTear() {
             cornerScrap.style.opacity = "0";
             cornerScrap.style.transform = "";
         }
+    } else {
+        hero.classList.remove("is-tearing");
     }
 
     if (socialRail) {
-        const isSlide = window.scrollY >= (ZOOM.slideStart || stage * 3.90) - 40;
+        const isSlide = window.scrollY >= (ZOOM.slideStart || stage * 4.70) - 40;
         const isHome  = window.scrollY <= stage * 0.85;
         if (isSlide) {
             socialRail.classList.add("dark-ink-all");
@@ -1097,7 +1070,7 @@ function syncScrollAndTear() {
     }
 
     buildTear();
-    applyTear(displayTear);
+    applyTear(initialTear);
     updateScrollStages(window.scrollY);
     if (window.placeStamps) {
         window.placeStamps();
