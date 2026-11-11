@@ -495,8 +495,9 @@ function applyTear(progress) {
         `translate3d(${48 * rip}vw, ${-18 * rip}vh, 0) ` +
         `rotate(${9 * rip}deg) scale(${1 - 0.18 * rip})`;
 
-    // Smooth continuous fade as paper halves fly outward
-    const fade = 1 - clamp01((progress - 0.45) / 0.50);
+    // Smooth continuous fade as paper halves fly outward - keeping paper subtly transparent
+    const basePaperOpacity = 0.90;
+    const fade = (1 - clamp01((progress - 0.45) / 0.50)) * basePaperOpacity;
 
     left.style.opacity = fade.toFixed(3);
     right.style.opacity = fade.toFixed(3);
