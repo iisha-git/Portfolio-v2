@@ -67,6 +67,8 @@ function measureStage() {
     ZOOM.slideStart    = screen * 4.75;
     ZOOM.slideSpan     = Math.min(screen * 1.05, 950);
 
+    if (heroWrapper) heroWrapper.style.height = Math.ceil(ZOOM.slideStart + ZOOM.slideSpan + screen) + "px";
+
     const firstSnap = document.querySelector(".snap-a");
     ZOOM.rest = firstSnap
         ? firstSnap.getBoundingClientRect().top + window.scrollY
@@ -826,13 +828,15 @@ function updateScrollStages(scroll) {
             projectsView.style.display = "block";
             projectsView.style.pointerEvents = "auto";
 
-            // Trigger rolling paper ball when entering stage 3 - snappy and responsive!
-            if (scroll >= ZOOM.projectsStart + 10) {
-                if (paperBallState === "perched" && !ballRollDelayTimer) {
-                    ballRollDelayTimer = setTimeout(() => {
-                        triggerPaperBallRoll();
-                    }, 350);
-                }
+            // Keep the paper ball perched on the scrapbook spread
+            if (paperBallState === "perched") {
+                requestAnimationFrame(perchBall);
+                // the laptop drop animations are still running at activation;
+                // re-perch once they settle so the ball lands on the final position
+                clearTimeout(perchBall._settleTimer);
+                perchBall._settleTimer = setTimeout(() => {
+                    if (paperBallState === "perched") perchBall();
+                }, 1400);
             }
         } else if (exitingProjects) {
             projectsView.classList.remove("projects-active");
@@ -861,94 +865,206 @@ function updateScrollStages(scroll) {
 // Interactive Paper Ball Physics & Navigation
 // ---------------------------------------------------------------
 let paperBallState = "perched"; // "perched" | "rolling" | "falling" | "bouncing" | "unfolding"
-let ballRollDelayTimer = null;
 let ballStepTimer = null;
 let ballFallTimer = null;
-let nyayTiltTimer = null;
+let rockRollRun = 0;
+let rockRollAnimation = null;
+let restoreCinematicPaper = null;
 
-function triggerPaperBallRoll() {
-    if (paperBallState !== "perched") return;
-    paperBallState = "rolling";
-
+// Phones: the stage ball perches on the bottom-right card's frame (bioOasis)
+// and, when tapped, rolls right off the page to open the achievements paper.
+// Desktop: the laptop ball perches on the NyayVivek lid by pure CSS, exactly
+// as the original design, so no JS positioning is needed there.
+function perchBall() {
+    if (window.innerWidth > 768) return;
     const ball = document.getElementById("interactivePaperBall");
-    const nyay = document.getElementById("laptopNyay");
-
-    clearTimeout(ballRollDelayTimer);
-    clearTimeout(ballStepTimer);
-    clearTimeout(ballFallTimer);
-    clearTimeout(nyayTiltTimer);
-    ballRollDelayTimer = null;
-    ballStepTimer = null;
-    ballFallTimer = null;
-    nyayTiltTimer = null;
-
-    if (nyay) {
-        nyay.classList.add("tilting");
-        // Spring back up naturally once ball leaves the corner
-        nyayTiltTimer = setTimeout(() => {
-            if (nyay) nyay.classList.remove("tilting");
-        }, 580);
-    }
-    if (ball) {
-        ball.classList.remove("perched", "is-falling", "is-bouncing", "is-unfolding");
-        ball.classList.add("is-rolling");
-    }
-
-    // 0.52s roll down the tilted ramp
-    ballStepTimer = setTimeout(() => {
-        if (paperBallState !== "rolling") return;
-        paperBallState = "falling";
-        if (ball) {
-            ball.classList.remove("is-rolling");
-            ball.classList.add("is-falling");
-        }
-
-        // 0.65s continuous parabolic gravity arc to floor
-        ballFallTimer = setTimeout(() => {
-            if (paperBallState !== "falling") return;
-            paperBallState = "bouncing";
-            if (ball) {
-                ball.classList.remove("is-falling");
-                ball.classList.add("is-bouncing");
-            }
-        }, 650);
-    }, 520);
+    const stage = document.querySelector(".projects-stage");
+    if (!ball || !stage) return;
+    const frame = document.querySelector(".card-bio .proj-frame");
+    if (!frame) return;
+    const fr = frame.getBoundingClientRect();
+    const sr = stage.getBoundingClientRect();
+    ball.style.left = (fr.right - sr.left - 58) + "px"; // keep clear of the social rail
+    ball.style.top = (fr.top - sr.top - 16) + "px";
 }
 
 function resetPaperBall() {
-    clearTimeout(ballRollDelayTimer);
+    rockRollRun++;
+    if (window.setPaperUnfoldCornerEntry) window.setPaperUnfoldCornerEntry(false);
+    if (restoreCinematicPaper) {restoreCinematicPaper(); restoreCinematicPaper=null;}
+    if (rockRollAnimation) rockRollAnimation.cancel();
+    document.querySelectorAll(".rock-roll-ball, .rock-roll-scene").forEach(node => node.remove());
+    const originalBall = document.getElementById("interactivePaperBallDesk");
+    if (originalBall) originalBall.style.visibility = "";
     clearTimeout(ballStepTimer);
     clearTimeout(ballFallTimer);
-    clearTimeout(nyayTiltTimer);
-    ballRollDelayTimer = null;
     ballStepTimer = null;
     ballFallTimer = null;
-    nyayTiltTimer = null;
-    if (paperBallState === "perched") return;
-    paperBallState = "perched";
-    const ball = document.getElementById("interactivePaperBall");
-    const nyay = document.getElementById("laptopNyay");
-    if (nyay) nyay.classList.remove("tilting");
-    if (ball) {
-        ball.classList.remove("is-rolling", "is-falling", "is-bouncing", "is-unfolding");
-        ball.classList.add("perched");
+    const deskPlane = document.getElementById("deskPlane");
+    if (deskPlane) deskPlane.classList.remove("plane-takeoff");
+    if (paperBallState !== "perched") {
+        paperBallState = "perched";
+        const nyay = document.getElementById("laptopNyay");
+        if (nyay) nyay.classList.remove("tilting");
+        document.querySelectorAll(".interactive-paper-ball").forEach(ball => {
+            ball.classList.remove("is-rolling", "is-falling", "is-bouncing", "is-unfolding");
+            ball.classList.add("perched");
+        });
     }
 }
 
+function setupProjectNavFocus() {
+    const stage = document.querySelector(".projects-stage");
+    if (!stage) return;
+    document.querySelectorAll(".project-nav-item[data-proj]").forEach(item => {
+        const key = "focus-" + item.dataset.proj;
+        item.addEventListener("mouseenter", () => {
+            if (window.innerWidth <= 768) stage.classList.add(key);
+        });
+        item.addEventListener("mouseleave", () => stage.classList.remove(key));
+    });
+}
+
+// A single click carries the desktop paper through the rock steps into the next sheet.
+async function rollPaperAcrossRocks(ball) {
+    const run = ++rockRollRun;
+    paperBallState = "rolling";
+    if (window.initPaperUnfold) window.initPaperUnfold();
+    // Open the view so the real supporting steps stay visible during the fall.
+    await new Promise(resolve => window.dispatchEvent(new CustomEvent("project-camera-overview", {detail:{onSettled:resolve}})));
+    if (run !== rockRollRun) return;
+    const lid = document.querySelector(".laptop-nyay .laptop-lid").getBoundingClientRect();
+    const deck = document.querySelector(".laptop-nyay .laptop-base-deck").getBoundingClientRect();
+    const rock = document.querySelector(".rock-stack").getBoundingClientRect();
+    const rect = ball.getBoundingClientRect();
+    const size = Math.max(44, rect.width);
+    const r = size / 2;
+    const sprite = document.createElement("img");
+    sprite.src = ball.querySelector("img").src;
+    sprite.alt = "";
+    sprite.className = "rock-roll-ball";
+    Object.assign(sprite.style, {position:"fixed",left:"0",top:"0",width:size+"px",height:size+"px",zIndex:"1000",pointerEvents:"none",filter:"drop-shadow(0 5px 4px #0008)"});
+    document.body.appendChild(sprite);
+    ball.style.visibility = "hidden";
+    const x = f => rock.left + rock.width * f;
+    const y = f => rock.top + rock.height * f;
+    // Roll off the rim, then let gravity take over. Never track down the bezel.
+    const frames = [];
+    let t = 0, px = rect.left+r, py = rect.top+r, spin = 0;
+    const put = () => frames.push({t, x:px, y:py, spin});
+    const roll = (nx,ny,dt) => { spin += (nx-px)/r*180/Math.PI; px=nx; py=ny; t+=dt; put(); };
+    const drop = (nx,ny) => {
+        const sx=px, sy=py, st=t, ss=spin;
+        const dt=Math.sqrt(2*Math.max(1,ny-sy)/2100);
+        for(let j=1;j<=12;j++) { const u=j/12; t=st+dt*u;px=sx+(nx-sx)*u;py=sy+(ny-sy)*u*u;spin=ss+150*u;put(); }
+    };
+    const bounce = (dx,h) => {
+        const sx=px,sy=py,st=t,ss=spin,dt=Math.sqrt(8*h/2100);
+        for(let j=1;j<=8;j++) { const u=j/8;t=st+dt*u;px=sx+dx*u;py=sy-4*h*u*(1-u);spin=ss+60*u;put(); }
+    };
+    put();
+    roll(lid.right+r*.48,lid.top+r*.25,.22);
+    drop(x(.815),y(.665)-r*.70);
+    bounce(23,9);
+    roll(x(.895),y(.650)-r*.70,.25);
+    drop(x(.915),y(.795)-r*.70);
+    bounce(25,7);
+    roll(x(.985),y(.780)-r*.70,.24);
+    roll(window.innerWidth-size*.48,y(.80),.18);
+    rockRollAnimation = sprite.animate(frames.map(p => ({offset:p.t/t,transform:"translate("+(p.x-r)+"px,"+(p.y-r)+"px) rotate("+p.spin+"deg)"})), {duration:t*1000,easing:"linear",fill:"forwards"});
+    try { await rockRollAnimation.finished; } catch (_) { return; }
+    if (run !== rockRollRun) return;
+    paperBallState = "unfolding";
+    // Keep this very same ball on screen as the camera leaves the rocks.
+    const veil=document.createElement("div");
+    veil.className="rock-roll-scene";
+    Object.assign(veil.style,{position:"fixed",inset:"0",background:"#0b0b0b",zIndex:"998",opacity:"0",pointerEvents:"none"});
+    document.body.appendChild(veil);
+    veil.animate([{opacity:0},{opacity:1}],{duration:480,fill:"forwards"});
+    const cx=window.innerWidth*.19, cy=window.innerHeight*.26;
+    rockRollAnimation.cancel();
+    rockRollAnimation=sprite.animate([
+        {offset:0,transform:"translate("+(px-r)+"px,"+(py-r)+"px) rotate("+spin+"deg) scale(1)"},
+        {offset:.40,transform:"translate("+(window.innerWidth*.07-r)+"px,"+(-size*1.2)+"px) rotate("+(spin+150)+"deg) scale(.85)"},
+        {offset:.66,transform:"translate("+(window.innerWidth*.11-r)+"px,"+(window.innerHeight*.02-r)+"px) rotate("+(spin+200)+"deg) scale(1)"},
+        {offset:1,transform:"translate("+(cx-r)+"px,"+(cy-r)+"px) rotate("+(spin+280)+"deg) scale(1.6)"}
+    ],{duration:880,easing:"linear",fill:"forwards"});
+    try {await rockRollAnimation.finished;} catch(_){return;}
+    if(run!==rockRollRun)return;
+    // Hand the same paper object into the site's real 3D uncrumpling mesh.
+    const paper=document.querySelector(".paper-slide");
+    const home=paper.parentNode, next=paper.nextSibling, oldStyle=paper.style.cssText;
+    restoreCinematicPaper=()=>{home.insertBefore(paper,next);paper.style.cssText=oldStyle;};
+    document.body.appendChild(paper);
+    Object.assign(paper.style,{position:"fixed",inset:"0",zIndex:"999",visibility:"visible",opacity:"1"});
+    if (window.setPaperUnfoldCornerEntry) window.setPaperUnfoldCornerEntry(true);
+    applySlide(.012);
+    sprite.animate([{opacity:1},{opacity:0}],{duration:180,fill:"forwards"});
+    await new Promise(resolve=>{
+        const start=performance.now();
+        function frame(now){
+            if(run!==rockRollRun){resolve();return;}
+            const u=Math.min(1,(now-start)/1350);
+            applySlide(.012+.988*(u*u*(3-2*u)));
+            if(u<1)requestAnimationFrame(frame);else resolve();
+        }
+        requestAnimationFrame(frame);
+    });
+    if(run!==rockRollRun)return;
+    window.scrollTo({top:ZOOM.slideStart+ZOOM.slideSpan*.96,behavior:"instant"});
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    restoreCinematicPaper();restoreCinematicPaper=null;applySlide(.96);
+    const reveal=veil.animate([{opacity:1},{opacity:0}],{duration:300,fill:"forwards"});
+    await reveal.finished;
+    sprite.remove();veil.remove();
+
+}
+
 function setupPaperBallInteractions() {
-    const ball = document.getElementById("interactivePaperBall");
-    if (ball) {
+    document.querySelectorAll(".interactive-paper-ball").forEach(ball => {
         ball.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
 
+            if (paperBallState === "perched" && window.innerWidth > 768) {
+                rollPaperAcrossRocks(ball);
+                return;
+            }
             if (paperBallState === "perched") {
-                triggerPaperBallRoll();
+                // roll right off the page, drop to the floor, bounce
+                paperBallState = "rolling";
+                ball.classList.remove("perched");
+                ball.classList.add("is-rolling");
+
+                // the NyayVivek lid tips under the ball's weight, then springs
+                // back once the ball leaves the corner (original choreography)
+                const nyay = document.getElementById("laptopNyay");
+                if (nyay) {
+                    nyay.classList.add("tilting");
+                    setTimeout(() => nyay.classList.remove("tilting"), 580);
+                }
+
+                ballStepTimer = setTimeout(() => {
+                    if (paperBallState !== "rolling") return;
+                    paperBallState = "falling";
+                    ball.classList.remove("is-rolling");
+                    ball.classList.add("is-falling");
+                    ballFallTimer = setTimeout(() => {
+                        if (paperBallState !== "falling") return;
+                        paperBallState = "bouncing";
+                        ball.classList.remove("is-falling");
+                        ball.classList.add("is-bouncing");
+                    }, 620);
+                }, 500);
                 return;
             }
 
-            if (paperBallState === "unfolding") return;
+            if (paperBallState !== "bouncing") return;
             paperBallState = "unfolding";
+
+            // the parked plane takes off as its crumpled page unrolls
+            const deskPlane = document.getElementById("deskPlane");
+            if (deskPlane) deskPlane.classList.add("plane-takeoff");
 
             ball.classList.remove("is-bouncing");
             ball.classList.add("is-unfolding");
@@ -973,36 +1089,10 @@ function setupPaperBallInteractions() {
                 }, 16);
             }
         });
-    }
+    });
 
-    // Interactive project list items in sidebar & 3D laptop spotlight
-    const navItems = document.querySelectorAll(".project-nav-item");
-    const stageEl = document.querySelector(".projects-stage");
-
-    function setFocusProject(projName) {
-        if (!stageEl) return;
-        stageEl.classList.remove("focus-krishi", "focus-nyay", "focus-bio");
-        if (projName) {
-            stageEl.classList.add(`focus-${projName}`);
-        }
-    }
-
-    navItems.forEach(item => {
-        const proj = item.getAttribute("data-proj");
-
-        item.addEventListener("mouseenter", () => {
-            setFocusProject(proj);
-        });
-
-        item.addEventListener("mouseleave", () => {
-            setFocusProject(null);
-        });
-
-        item.addEventListener("click", () => {
-            navItems.forEach(n => n.classList.remove("active"));
-            item.classList.add("active");
-            setFocusProject(proj);
-        });
+    window.addEventListener("resize", () => {
+        if (paperBallState === "perched") perchBall();
     });
 }
 
@@ -1093,6 +1183,7 @@ function setupStampInteractions() {
 
 syncScrollAndTear();
 setupPaperBallInteractions();
+setupProjectNavFocus();
 setupStampInteractions();
 
 window.addEventListener("load", () => {
@@ -1128,3 +1219,181 @@ window.addEventListener("resize", () => {
         }, 180);
     }
 });
+
+
+/* ============================================================
+   r21 - projects camera: continuous flight through the 3D scene
+   wheel/trackpad scrubs progress 0..1; the camera dollies forward
+   on a smooth path with dwell at each laptop; labels fade in as
+   the camera reaches their project. desktop only.
+   ============================================================ */
+function setupProjectsCamera() {
+    var stage = document.querySelector(".projects-stage");
+    var camEl = document.querySelector(".cam3d");
+    if (!stage || !camEl) return;
+    var navItems = document.querySelectorAll(".project-nav-item[data-proj]");
+    var tapes = {
+        krishi: [document.querySelector(".tape-krishi"), document.querySelector(".arrow-krishi")],
+        nyay:   [document.querySelector(".tape-nyay"),   document.querySelector(".arrow-nyay")],
+        bio:    [document.querySelector(".tape-bio"),    document.querySelector(".arrow-bio")]
+    };
+
+    /* camera path keyframes: progress -> [camZ, tx, ty] (tuned at 1280, wide set at >=1400) */
+    var KEYS_NARROW = [
+        [0.00,    0,   0,    0],
+        [0.30,  360,  20,   82],
+        [0.55,  430,-128,   15],
+        [0.85,  500,  35, -138],
+        [1.00,  510,  35, -140]
+    ];
+    /* Project navigation stops. */
+    var STOPS = [ {p:0.30, key:'krishi'}, {p:0.55, key:'nyay'}, {p:0.85, key:'bio'} ];
+
+    // This overlay is outside the camera, so connectors stay legible when
+    // rail compensation moves a note below its device at a close-up.
+    var ns = "http://www.w3.org/2000/svg";
+    var connectors = document.createElementNS(ns, "svg");
+    connectors.setAttribute("class", "camera-connectors");
+    connectors.setAttribute("aria-hidden", "true");
+    connectors.innerHTML = '<defs><marker id="cameraArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#e9d9ff" stroke-width="1.3"/></marker></defs>';
+    var connectorPaths = {};
+    Object.keys(tapes).forEach(function(key) {
+        var path = document.createElementNS(ns,"path");
+        path.setAttribute("marker-end","url(#cameraArrow)");
+        connectors.appendChild(path); connectorPaths[key] = path;
+    });
+    stage.appendChild(connectors);
+    var target = 0, prog = 0, raf = null, overviewReady = null;
+
+    function pathAt(t, keys) {
+        if (t <= keys[0][0]) return keys[0].slice(1);
+        for (var i = 0; i < keys.length - 1; i++) {
+            var a = keys[i], b = keys[i+1];
+            if (t <= b[0]) {
+                var u = (t - a[0]) / (b[0] - a[0]);
+                u = u*u*(3-2*u); /* smoothstep: eases into and out of each stop */
+                return [ a[1]+(b[1]-a[1])*u, a[2]+(b[2]-a[2])*u, a[3]+(b[3]-a[3])*u ];
+            }
+        }
+        return keys[keys.length-1].slice(1);
+    }
+
+    function apply() {
+        if (window.innerWidth <= 768) {
+            /* phone: no 3D camera - keep .cam3d untransformed so the stacked
+               cards' absolute tops resolve against the stage, not a 0-height
+               transformed wrapper */
+            camEl.style.transform = "";
+            Object.keys(tapes).forEach(function (key) {
+                if (tapes[key][0]) {
+                    tapes[key][0].style.translate = "";
+                    tapes[key][0].style.scale = "";
+                    tapes[key][0].style.transformOrigin = "";
+                }
+            });
+            connectors.style.display = "none";
+            raf = null;
+            return;
+        }
+        prog += (target - prog) * (paperBallState === "rolling" ? .22 : .085);
+        if (Math.abs(target - prog) < 0.0004) prog = target;
+        var shift = window.innerWidth - 1280;
+        var txFactors = [0, .4, .15, .5, .5];
+        var keys = KEYS_NARROW.map(function (key, index) {
+            return [key[0], key[1], key[2] + shift * txFactors[index], key[3]];
+        });
+        var v = pathAt(prog, keys);
+        camEl.style.transform = "translate3d(" + v[1].toFixed(1) + "px," + v[2].toFixed(1) + "px," + v[0].toFixed(1) + "px)";
+        var cz = v[0];
+        stage.closest(".projects-view").classList.toggle("camera-closeup", cz > 10);
+        connectors.style.display = "block";
+        connectors.setAttribute("viewBox", "0 0 " + stage.clientWidth + " " + stage.clientHeight);
+        var parkedPlane = document.getElementById("deskPlane");
+        if (parkedPlane) parkedPlane.style.opacity = String(Math.max(0, 1 - prog / .10));
+        for (var i = 0; i < STOPS.length; i++) {
+            var s = STOPS[i];
+            var d = Math.min(Math.abs(prog - s.p) / .20, 1);
+            var overview = Math.max(0, 1 - prog / .12);
+            var presence = d < .25 ? 1 : Math.pow((1-d)/.75, 2);
+            var op = Math.max(overview, presence).toFixed(3);
+            var annotationOpacity = (paperBallState === "rolling" ? 0 : Math.max(overview, presence)).toFixed(3);
+            var laptop = document.querySelector(".laptop-" + s.key);
+            if (laptop) laptop.style.setProperty("opacity", op, "important");
+            var els = tapes[s.key];
+            /* Keep the notes readable as their depth layer approaches the
+               camera. Reserve the original social rail's right-hand gutter;
+               compensate in local units so the camera path stays unchanged. */
+            var tape = els[0];
+            if (tape) {
+                tape.style.translate = "0px 0px";
+                tape.style.scale = "1";
+                tape.style.transformOrigin = "top left";
+                var bounds = tape.getBoundingClientRect();
+                var scale = bounds.width / Math.max(tape.offsetWidth, 1);
+                tape.style.scale = String(Math.min(1, 1 / Math.max(scale, 0.01)));
+                bounds = tape.getBoundingClientRect();
+                var desiredLeft = window.innerWidth - 282 + (i === 1 ? 32 * overview : 0);
+                var desiredTop = [122, 323, 535][i] * Math.min(1.12, stage.clientHeight / 720);
+                var dy = desiredTop - bounds.top;
+                tape.style.translate = ((desiredLeft - bounds.left) / Math.max(scale, 0.01)).toFixed(2)
+                    + "px " + (dy / Math.max(scale, 0.01)).toFixed(2) + "px";
+            }
+            if (tape) {
+                var noteBox = tape.getBoundingClientRect();
+                var lid = document.querySelector(".laptop-" + s.key + " .laptop-lid");
+                var lidBox = lid.getBoundingClientRect();
+                var stageBox = stage.getBoundingClientRect();
+                var x0 = lidBox.right + 8;
+                var y0 = Math.max(lidBox.top + 20, Math.min(lidBox.bottom - 24, noteBox.top + 18));
+                var x1 = noteBox.left - 10;
+                var y1 = noteBox.top + 18;
+                var close = presence * (1-overview);
+                x0 = x0 + (x1-x0)*.38*close;
+                y0 = y0 + (y1-y0)*.35*close;
+                var dx = Math.max(16, x1-x0);
+                var wave = [42, 38, -34][i] * (1-.60*close);
+                connectorPaths[s.key].style.strokeWidth = String(2.2-.7*close);
+                connectorPaths[s.key].style.strokeDasharray = close > .5 ? "2 5" : "3 6";
+                var mx = x0 + dx * [.49,.57,.42][i];
+                var my = (y0+y1)/2-wave*.44;
+                function pt(x,y) { return (x-stageBox.left).toFixed(1)+" "+(y-stageBox.top).toFixed(1); }
+                connectorPaths[s.key].setAttribute("d", "M"+pt(x0,y0)
+                    +" C"+pt(x0+dx*.17,y0-wave)+" "+pt(mx-dx*.19,my-wave*.4)+" "+pt(mx,my)
+                    +" S"+pt(x1-dx*.13,y1+wave*.52)+" "+pt(x1,y1));
+                connectorPaths[s.key].style.opacity = annotationOpacity;
+            }
+            for (var j = 0; j < els.length; j++) {
+                if (els[j]) els[j].style.setProperty("opacity", j === 1 ? "0" : annotationOpacity, "important");
+            }
+        }
+        var activeIdx = 0;
+        if (prog > .70) activeIdx = 2; else if (prog > .425) activeIdx = 1;
+        navItems.forEach(function (item, i) { item.classList.toggle("active", i === activeIdx); });
+        if (prog !== target) { raf = requestAnimationFrame(apply); } else { raf = null; if (overviewReady && prog === 0) { var ready = overviewReady; overviewReady = null; ready(); } }
+    }
+    function kick() { if (raf === null) raf = requestAnimationFrame(apply); }
+    function setTarget(t) { target = Math.max(0, Math.min(1, t)); kick(); }
+
+    window.addEventListener("wheel", function (e) {
+        if (window.innerWidth <= 768) return;
+        if (!document.querySelector(".projects-view.projects-active")) return;
+        if (Math.abs(e.deltaY) < 3) return;
+        if (e.deltaY > 0 && target < 1) { e.preventDefault(); setTarget(target + e.deltaY / 3600); }
+        else if (e.deltaY < 0 && target > 0) { e.preventDefault(); setTarget(target + e.deltaY / 3600); }
+        /* at the ends the page scrolls on naturally */
+    }, { passive: false });
+
+    window.addEventListener("keydown", function (e) {
+        if (window.innerWidth <= 768) return;
+        if (!document.querySelector(".projects-view.projects-active")) return;
+        if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setTarget(target + 0.14); }
+        else if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); setTarget(target - 0.14); }
+    });
+    navItems.forEach(function (item, i) {
+        item.addEventListener("click", function () { setTarget(STOPS[i].p); });
+    });
+    window.addEventListener("project-camera-overview", function(e) { overviewReady = e.detail && e.detail.onSettled; setTarget(0); });
+    window.addEventListener("resize", kick);
+    apply(); /* paint the overview state on load */
+}
+setupProjectsCamera();

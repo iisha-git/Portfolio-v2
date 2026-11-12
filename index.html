@@ -377,17 +377,26 @@
                             <span class="p-arrow">→</span>
                         </div>
                     </div>
-
-                    <a href="#explore" class="projects-cta-btn">
-                        <span>EXPLORE ALL PROJECTS</span>
-                        <div class="cta-arrow-circle">
-                            <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </a>
                 </div>
 
-                <!-- Center/Right 3D Laptops Showcase Stage -->
+                <!-- One-page scrapbook spread: all three projects, composed -->
+                <header class="projects-head">
+                    <h2 class="projects-heading">projects <span class="chalk-built">i've built.<span class="chalk-underline"></span></span></h2>
+                    <p class="projects-subheading">from early ideas to working prototypes.</p>
+                </header>
+
                 <div class="projects-stage">
+                    <div class="cam3d">
+                    <!-- Receding environment only. Devices and their continuous supporting staircase remain at z=0. -->
+                    <div class="depth-environment" aria-hidden="true">
+                        <div class="depth-plane depth-far"><img src="assets/depth-far.png" alt=""></div>
+                        <div class="depth-plane depth-middle"><img src="assets/depth-middle.png" alt=""></div>
+                        <div class="depth-plane depth-near"><img src="assets/depth-near.png" alt=""></div>
+                        <div class="depth-haze"></div>
+                    </div>
+                    <!-- One continuous staircase, preserving the supplied overlaps and shadows. -->
+                    <div class="zl z-stack"><img class="rock-stack" src="assets/rock-stack-lit.png" alt="" aria-hidden="true"></div>
+                    <div class="zl z-krishi">
                     <!-- Tape Badge 1: KrishiSense -->
                     <div class="project-tape tape-krishi">
                         <div class="tape-strip">
@@ -427,15 +436,15 @@
                     <svg class="looped-arrow arrow-krishi" viewBox="0 0 180 80" fill="none"
                         xmlns="http://www.w3.org/2000/svg" aria-label="Points from KrishiSense laptop to its about">
                         <path class="arrow-path"
-                            d="M 12 55 C 45 55, 68 34, 82 20 C 96 6, 112 12, 104 30 C 94 48, 76 46, 85 36 C 96 24, 126 28, 162 38" />
+                            d="M 8 62 C 45 25, 100 20, 162 38" />
                         <path class="arrow-head" d="M 148 29 L 163 38 L 150 47" />
-                    </svg>
+                    </svg></div>
 
                     <!-- Laptop 2: NyayVivek (Middle Right) -->
-                    <div class="laptop-wrapper laptop-nyay" id="laptopNyay">
+                    <div class="zl z-nyay"><div class="laptop-wrapper laptop-nyay" id="laptopNyay">
                         <div class="laptop-device">
                             <!-- Paper Ball resting directly on top border of NyayVivek laptop screen -->
-                            <div class="interactive-paper-ball perched" id="interactivePaperBall"
+                            <div class="interactive-paper-ball perched" id="interactivePaperBallDesk"
                                 title="Click to uncrumple!">
                                 <img src="assets/paper-ball.png" alt="Paper Ball" class="ball-sprite">
                                 <div class="ball-ground-shadow"></div>
@@ -468,7 +477,7 @@
                     <svg class="looped-arrow arrow-nyay" viewBox="0 0 180 90" fill="none"
                         xmlns="http://www.w3.org/2000/svg" aria-label="Points from NyayVivek laptop to its about">
                         <path class="arrow-path"
-                            d="M 12 28 C 38 14, 58 12, 76 24 C 95 37, 108 56, 94 70 C 80 82, 63 68, 76 52 C 90 32, 124 35, 162 44" />
+                            d="M 8 50 C 60 18, 112 22, 162 44" />
                         <path class="arrow-head" d="M 148 35 L 163 44 L 150 54" />
                     </svg>
 
@@ -478,10 +487,10 @@
                             <span class="tape-text">NyayVivek</span>
                         </div>
                         <p class="tape-desc">CASE-FILE RESEARCH AND SIMILAR-CASE DISCOVERY.</p>
-                    </div>
+                    </div></div>
 
                     <!-- Laptop 3: bioOasis (Bottom Center) -->
-                    <div class="laptop-wrapper laptop-bio" id="laptopBio">
+                    <div class="zl z-bio"><div class="laptop-wrapper laptop-bio" id="laptopBio">
                         <div class="laptop-device">
                             <div class="laptop-lid">
                                 <div class="screen-notch">
@@ -510,8 +519,8 @@
                     <svg class="looped-arrow arrow-bio" viewBox="0 0 180 95" fill="none"
                         xmlns="http://www.w3.org/2000/svg" aria-label="Points from bioOasis laptop to its about">
                         <path class="arrow-path"
-                            d="M 12 24 C 40 34, 65 56, 84 70 C 101 82, 114 70, 104 50 C 94 34, 75 36, 82 54 C 91 72, 120 78, 162 74" />
-                        <path class="arrow-head" d="M 148 64 L 163 74 L 149 83" />
+                            d="M 8 8 C 28 44, 86 58, 162 56" />
+                        <path class="arrow-head" d="M 146 45 L 163 56 L 147 65" />
                     </svg>
 
                     <!-- Tape Badge 3: bioOasis -->
@@ -520,7 +529,39 @@
                             <span class="tape-text">bioOasis</span>
                         </div>
                         <p class="tape-desc">CHECKING CROP-PRODUCT MIXES WITH LABEL-BASED EVIDENCE.</p>
+                    </div></div>
+
+                    <article class="proj-card card-krishi" data-proj="krishi">
+                        <div class="proj-frame">
+                            <img src="assets/dashboard-krishi.jpg" alt="KrishiSense dashboard">
+                            <h3 class="proj-name">KrishiSense</h3>
+                            <p class="proj-line">farm-level yield estimation &amp; insurance settlement for PMFBY.</p>
+                        </div>
+                    </article>
+                    <article class="proj-card card-nyay" data-proj="nyay">
+                        <div class="proj-frame">
+                            <img src="assets/dashboard-nyay.jpg" alt="NyayVivek dashboard">
+                            <h3 class="proj-name">NyayVivek</h3>
+                            <p class="proj-line">case-file research &amp; similar-case discovery.</p>
+                        </div>
+                    </article>
+                    <article class="proj-card card-bio" data-proj="bio">
+                        <div class="proj-frame">
+                            <img src="assets/dashboard-bio.jpg" alt="bioOasis dashboard">
+                            <h3 class="proj-name">bioOasis</h3>
+                            <p class="proj-line">checking crop-product mixes with label-based evidence.</p>
+                        </div>
+                    </article>
+
+                    <div class="interactive-paper-ball perched" id="interactivePaperBall"
+                        title="Click to uncrumple!">
+                        <img src="assets/paper-ball.png" alt="Paper Ball" class="ball-sprite">
+                        <div class="ball-ground-shadow"></div>
                     </div>
+
+                    <div class="zl z-krishi"><img src="assets/paper-plane.svg" class="desk-plane" id="deskPlane" alt=""
+                        aria-hidden="true"></div>
+                    </div><!-- /cam3d -->
                 </div>
             </section>
 

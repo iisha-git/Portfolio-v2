@@ -1715,10 +1715,21 @@ html {
     background: #C4B5FD;
 }
 
+.projects-head {
+    position: absolute;
+    left: 5vw;
+    top: 108px;
+    z-index: 12;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    pointer-events: none;
+}
+
 .projects-heading {
     font-family: 'Anton', 'Oswald', sans-serif;
-    font-size: 3.9rem;
-    line-height: 0.96;
+    font-size: 2.5rem;
+    line-height: 1;
     letter-spacing: 1.2px;
     color: #ffffff;
     margin: 0;
@@ -1745,13 +1756,12 @@ html {
 }
 
 .projects-subheading {
-    font-family: 'Oswald', sans-serif;
-    font-size: .85rem;
-    letter-spacing: 1.6px;
-    color: #9CA3AF;
+    font-family: 'Caveat', cursive;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #C4B5FD;
     margin: 0;
-    text-transform: uppercase;
-    font-weight: 500;
+    transform: rotate(-1.5deg);
 }
 
 .projects-nav-list {
@@ -1846,10 +1856,7 @@ html {
 /* Center/Right 3D Laptops Showcase Stage */
 .projects-stage {
     position: absolute;
-    left: 44vw;
-    right: 0;
-    top: 115px;
-    bottom: 15px;
+    inset: 0;
     perspective: 1400px;
     z-index: 10;
     pointer-events: none;
@@ -3320,7 +3327,8 @@ html {
     }
 
     .projects-stage {
-        left: 40vw;
+        left: 0;
+        right: 0;
     }
 
     .laptop-krishi {
@@ -3510,3 +3518,839 @@ html {
         bottom: 4%;
     }
 }
+/* ===============================================================
+   PROJECTS - FULL-SCREEN SCRAPBOOK PAGES (her redesign direction).
+   One page per project: big taped frame with the real screenshot,
+   ghost index, handwritten title, one-line description. Phones
+   swipe between pages (scroll-snap); desktop clicks the sidebar
+   list or the dots. The paper ball rides the active frame's corner:
+   tap it to roll right onto the next page; on the last page it
+   drops, bounces, and a second tap opens the achievements sheet.
+   =============================================================== */
+.projects-stage {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: auto;
+}
+
+/* All three projects composed on ONE page: a scrapbook spread that
+   fills the viewport. Cards overlap casually, later cards on top. */
+.proj-card {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+    transform: rotate(var(--r, 0deg));
+}
+
+.card-krishi { left: 4%;  top: 26%; width: 27vw; --r: -2deg;  z-index: 11; }
+.card-nyay   { left: 33%; top: 14%; width: 27vw; --r: 1.6deg; z-index: 12; }
+.card-bio    { left: 62%; top: 40%; width: 24vw; --r: -1.3deg; z-index: 13; }
+
+.proj-card .proj-frame {
+    width: 100%;
+    transform: none;
+}
+
+.proj-frame {
+    position: relative;
+    background: #fdfaf3;
+    padding: 12px 12px 14px;
+    transform: rotate(-1.6deg);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
+}
+
+.proj-frame::before,
+.proj-frame::after {
+    content: "";
+    position: absolute;
+    width: 74px;
+    height: 24px;
+    background: rgba(196, 181, 253, 0.85);
+    clip-path: polygon(3% 12%, 97% 0%, 100% 88%, 0% 100%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.proj-frame::before { top: -12px; left: 8%; transform: rotate(-5deg); }
+.proj-frame::after  { top: -10px; right: 10%; transform: rotate(4deg); }
+
+.proj-frame img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+}
+
+.proj-name {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(24px, 2.1vw, 34px);
+    line-height: 1;
+    color: #5b21b6;
+    text-align: center;
+    margin: 10px 0 2px;
+}
+
+.proj-line {
+    font-family: 'Oswald', sans-serif;
+    font-size: .62rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #6b5a41;
+    text-align: center;
+    max-width: 100%;
+    margin: 0;
+}
+
+.proj-dots {
+    display: none;
+}
+
+.proj-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.28);
+    cursor: pointer;
+    transition: background .25s ease, transform .25s ease;
+}
+
+.proj-dot.is-on {
+    background: #C4B5FD;
+    transform: scale(1.35);
+}
+
+/* the paper ball rides the active frame's top-right corner */
+.interactive-paper-ball {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    z-index: 40;
+    cursor: pointer;
+    transition: left .45s cubic-bezier(.34, 1.4, .64, 1), top .45s cubic-bezier(.34, 1.4, .64, 1), transform .55s cubic-bezier(.3, .7, .4, 1), opacity .3s ease;
+    pointer-events: auto;
+}
+
+.interactive-paper-ball .ball-sprite { width: 100%; display: block; }
+.interactive-paper-ball .ball-ground-shadow { display: none; }
+
+.interactive-paper-ball.is-rolling {
+    transform: translate(72px, 14px) rotate(230deg);
+}
+
+.interactive-paper-ball.is-falling {
+    transform: translate(96px, 240px) rotate(320deg);
+    transition: transform .6s cubic-bezier(.55, .08, .8, .4), opacity .3s ease;
+}
+
+.interactive-paper-ball.is-bouncing {
+    transform: translate(96px, 236px) rotate(320deg) scale(1.06, .9);
+    animation: ballIdleBounce 1.1s ease-in-out infinite;
+}
+
+@keyframes ballIdleBounce {
+    0%, 100% { transform: translate(96px, 236px) rotate(320deg) scale(1.06, .9); }
+    30% { transform: translate(96px, 218px) rotate(330deg) scale(.96, 1.06); }
+    55% { transform: translate(96px, 236px) rotate(324deg) scale(1.05, .92); }
+}
+
+.interactive-paper-ball.is-unfolding {
+    transform: translate(96px, 200px) scale(2.2);
+    opacity: 0;
+    transition: transform .5s ease, opacity .45s ease;
+}
+
+@media(max-width:768px) {
+    .projects-stage {
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+
+    /* slim header; the scrapbook spread is the star */
+    .projects-head {
+        left: 6%;
+        top: 86px;
+        max-width: 66vw;
+    }
+
+    .projects-heading { font-size: 1.45rem; line-height: 1.05; }
+    .projects-subheading { font-size: .92rem; white-space: nowrap; max-width: none; }
+    .projects-cta-btn { display: none; }
+
+    /* deliberate stacked composition of all three projects */
+    .card-krishi { left: 4%;  top: 17.5%; width: 62vw; --r: -2deg; }
+    .card-nyay   { left: auto; right: 4%; top: 43.5%; width: 58vw; --r: 1.8deg; }
+    .card-bio    { left: 7%;  top: 67%; width: 52vw; --r: -1.5deg; }
+
+    .proj-card { gap: 4px; }
+
+    .proj-frame {
+        padding: 8px 8px 10px;
+    }
+
+    .proj-frame::before, .proj-frame::after { width: 52px; height: 18px; }
+
+    .proj-name { font-size: 1.25rem; margin: 6px 0 1px; }
+
+    .proj-line {
+        font-size: .55rem;
+        letter-spacing: 1px;
+    }
+
+    .interactive-paper-ball { width: 44px; height: 44px; }
+
+    .interactive-paper-ball.is-rolling { transform: translate(56px, 12px) rotate(230deg); }
+    .interactive-paper-ball.is-falling { transform: translate(76px, 162px) rotate(320deg); }
+    .interactive-paper-ball.is-bouncing { transform: translate(76px, 158px) rotate(320deg) scale(1.06, .9); }
+
+    @keyframes ballIdleBounce {
+        0%, 100% { transform: translate(76px, 158px) rotate(320deg) scale(1.06, .9); }
+        30% { transform: translate(76px, 143px) rotate(330deg) scale(.96, 1.06); }
+        55% { transform: translate(76px, 158px) rotate(324deg) scale(1.05, .92); }
+    }
+
+    .interactive-paper-ball.is-unfolding { transform: translate(76px, 132px) scale(2.2); }
+}
+
+
+/* ===============================================================
+   THE PLANE LANDS - after riding the trail through the journey it
+   parks on the projects desk; tapping the paper ball to open the
+   achievements sheet sends it flying off again.
+   =============================================================== */
+.desk-plane {
+    position: absolute;
+    right: 10%;
+    bottom: 11%;
+    width: 62px;
+    z-index: 14;
+    opacity: 0;
+    transform: rotate(8deg);
+    pointer-events: none;
+    transition: opacity .5s ease .15s;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5));
+}
+
+.projects-view.projects-active .desk-plane {
+    opacity: 1;
+    animation: deskBob 3.2s ease-in-out infinite;
+}
+
+@keyframes deskBob {
+    0%, 100% { transform: rotate(8deg) translateY(0); }
+    50%      { transform: rotate(5deg) translateY(-6px); }
+}
+
+.desk-plane.plane-takeoff {
+    animation: none;
+    transition: transform .95s cubic-bezier(.45, -.15, .75, .35), opacity .8s ease .15s;
+    transform: translate(55vw, -75vh) rotate(-18deg) !important;
+    opacity: 0 !important;
+}
+
+@media(max-width:768px) {
+    .desk-plane { width: 44px; right: 5%; bottom: 12%; }
+}
+
+
+/* ===============================================================
+   PROJECTS LAPTOP SHOWCASE RESTORE (r13) - she picked the original
+   3D laptop showcase over the scrapbook spread, asking for better
+   space utilization: bigger laptops, a fuller page, nothing clipped
+   (the NyayVivek tape ran off the right edge in the original).
+   Desktop (>=769px) shows the laptop stage again with reworked
+   positions; the scrapbook card spread stays as the phone layout
+   (<=768px), where the original showcase was the black-screen bug.
+   =============================================================== */
+@media (min-width: 769px) {
+    /* the sidebar owns the heading on desktop */
+    .projects-head { display: none; }
+    /* the scrapbook cards are the phone-only layout now */
+    .proj-card { display: none; }
+
+    /* restore the original stage box and laptop cascade exactly as she
+       approved it (orig-dproj) - same sizes, ratio and tight overlap;
+       only "the rest" (tapes, arrows, empty corners) gets improved */
+    .projects-stage {
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+
+    /* keep every tape fully inside the viewport, clear of the social rail
+       (the original NyayVivek description ran off the right edge) */
+    .tape-nyay { max-width: 170px; }
+    .tape-bio  { max-width: 235px; }
+
+    /* aim the NyayVivek loop at its tape strip - it used to land on the
+       first letter of the description ("CASE-FILE" read "ASE-FILE") */
+    .arrow-nyay { top: 19.5%; left: 30vw; }
+
+    /* slide the KrishiSense tape (and its loop) left so the perched paper
+       ball no longer sits on the description's last line at 1280 */
+    .tape-krishi { left: 26vw; }
+    .arrow-krishi { left: 17.5vw; }
+
+    /* park the journey plane in the empty column under the sidebar
+       (stage-relative negative left reaches the viewport's left edge) */
+    .desk-plane { right: auto; left: -37vw; bottom: 4%; }
+
+}
+
+@media (max-width: 768px) {
+    /* phone keeps the verified scrapbook card stack */
+    .projects-sidebar,
+    .laptop-wrapper,
+    .project-tape { display: none; }
+    /* r22: desktop rock staircase slabs stay out of the phone layout */
+    .rock-slab { display: none; }
+}
+
+/* r13 fixes: retire the original laptop-lid ball choreography - its
+   !important keyframes were built for the old perch inside laptop-nyay
+   and threw the ball off-viewport from the new perch. The r3 transform
+   choreography (roll right, drop, bounce, unfold) now applies as meant.
+   Also let the sidebar hover spotlight beat the drop-keyframe opacity. */
+#interactivePaperBall.is-rolling { animation: none !important; }
+#interactivePaperBall.is-falling { animation: none !important; }
+#interactivePaperBall.is-bouncing { animation: ballIdleBounce 1.1s ease-in-out infinite !important; }
+#interactivePaperBall.is-unfolding { animation: none !important; }
+
+.projects-stage.focus-krishi .laptop-wrapper:not(.laptop-krishi),
+.projects-stage.focus-nyay .laptop-wrapper:not(.laptop-nyay),
+.projects-stage.focus-bio .laptop-wrapper:not(.laptop-bio) {
+    opacity: 0.45 !important;
+    filter: brightness(0.72) saturate(0.75) !important;
+}
+
+/* ===== r16: ball back on the NyayVivek laptop + fuller left column ===== */
+/* stage ball is the phone layout's; laptop ball owns desktop */
+@media (min-width: 769px) {
+    #interactivePaperBall { display: none; }
+    /* restore the original ball sizing and floor shadow for the laptop ball */
+    #interactivePaperBallDesk { width: 56px; height: 56px; transition: none; }
+    #interactivePaperBallDesk .ball-ground-shadow { display: block; }
+
+    /* fuller sidebar: bigger type, wider column, looser rhythm */
+    .projects-sidebar { width: min(36vw, 470px); gap: 1.7rem; }
+    .projects-sidebar .chapter-badge { font-size: .98rem; letter-spacing: .22em; }
+    .projects-sidebar .chapter-line { width: 64px; }
+    .projects-sidebar .projects-heading { font-size: clamp(3.1rem, 4.3vw, 4.5rem); line-height: 1.02; }
+    .projects-sidebar .projects-subheading { font-size: clamp(1.35rem, 1.55vw, 1.7rem); }
+    .projects-sidebar .projects-nav-list { gap: 1.5rem; margin-top: .6rem; }
+    .projects-sidebar .project-nav-item { gap: 20px; }
+    .projects-sidebar .project-nav-item .p-index { font-size: 2.1rem; width: 42px; }
+    .projects-sidebar .project-nav-item .p-title { font-size: 1.72rem; }
+    .projects-sidebar .project-nav-item .p-arrow { font-size: 1.45rem; }
+}
+@media (max-width: 768px) {
+    #interactivePaperBallDesk { display: none; }
+}
+
+/* ===== r17: enlarge the laptops, distribute a bit (her steer 12:31) ===== */
+@media (min-width: 769px) {
+    .laptop-krishi { top: 20px; left: 6vw; width: 340px; max-width: 26vw; }
+    .laptop-nyay   { top: 25%;  left: 19vw; width: 360px; max-width: 27vw; }
+    .laptop-bio    { top: 47%;  left: 3vw;  width: 375px; max-width: 28vw; }
+
+    /* keep the ball proportional on the wider NyayVivek lid: perch a touch
+       left of the original 175px so it clears the tape strip, and stretch
+       the roll/fall so it still rolls off the lid's right corner and lands
+       on the same floor spot, clear of the rail */
+    #interactivePaperBallDesk { left: 160px; }
+
+    @keyframes ballRollAcrossLid {
+        0%   { transform: translate(0, 0) rotate(0deg); }
+        45%  { transform: translate(60px, 2px) rotate(110deg); }
+        78%  { transform: translate(130px, 7px) rotate(220deg); }
+        100% { transform: translate(195px, 14px) rotate(300deg); }
+    }
+    @keyframes ballGravityFall {
+        0%   { transform: translate(195px, 14px) rotate(300deg); }
+        26%  { transform: translate(218px, 72px) rotate(380deg); }
+        62%  { transform: translate(185px, 228px) rotate(465deg); }
+        100% { transform: translate(175px, 425px) rotate(530deg); }
+    }
+    @keyframes ballRhythmicBounce {
+        0%, 100% { transform: translate(175px, 425px) scale(1.12, 0.88); }
+        45%      { transform: translate(175px, 389px) scale(0.92, 1.08) rotate(12deg); }
+    }
+    @keyframes ballPopUnfold {
+        0%   { transform: translate(168px, 425px) scale(1); }
+        50%  { transform: translate(168px, 335px) scale(1.35) rotate(45deg); }
+        100% { transform: translate(168px, 285px) scale(0.1) rotate(180deg); opacity: 0; }
+    }
+}
+
+/* ===== r18: G2 stepped torn-paper depth cascade on desktop projects ===== */
+.paper-band { display: none; }
+
+@media (min-width: 769px) {
+    .paper-band {
+        display: block;
+        position: absolute;
+        pointer-events: none;
+        user-select: none;
+        opacity: 0;
+    }
+    .band-1 { top: -41.5%; left: -17.3vw; width: 80.5vw; max-width: 1290px; z-index: 5; }
+    .band-2 { top: -22.9%; left: -13.4vw; width: 76.6vw; max-width: 1230px; z-index: 6; }
+    .band-3 { top: 14.4%; left: -7.1vw; width: 70.3vw; max-width: 1125px; z-index: 7; }
+    .band-4 { top: 51.7%; left: -17.3vw; width: 80.5vw; max-width: 1290px; z-index: 8; }
+
+    @keyframes bandRise {
+        from { opacity: 0; transform: translateY(26px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .projects-view.projects-active .band-1 { animation: bandRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.05s forwards; }
+    .projects-view.projects-active .band-2 { animation: bandRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.16s forwards; }
+    .projects-view.projects-active .band-3 { animation: bandRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.27s forwards; }
+    .projects-view.projects-active .band-4 { animation: bandRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.38s forwards; }
+
+    /* Labels lifted fully off the laptops, onto paper / open black */
+    .tape-krishi { top: 3px; left: 32.6vw; max-width: 222px; }
+    .tape-nyay   { top: 84%; left: 32vw; max-width: 155px; }
+    .tape-bio    { top: 84%; left: -21.2vw; max-width: 245px; }
+
+    /* Arrows run from each laptop's edge outward to its name */
+    .arrow-krishi {
+        top: 0.5%; left: 29.7vw;
+        width: 58px; min-width: 58px; max-width: 58px; height: 36px;
+        transform: rotate(-12deg);
+    }
+    .arrow-nyay {
+        top: 74%; left: 34.4vw;
+        width: 64px; min-width: 64px; max-width: 64px; height: 48px;
+        transform: rotate(90deg);
+    }
+    .arrow-bio    { top: 72.9%; left: -9.1vw; transform: scaleX(-1) rotate(4deg); }
+    .projects-view.projects-active .arrow-krishi {
+        animation:
+            chalkArrowSketch 0.50s cubic-bezier(0.16, 1, 0.3, 1) 0.78s forwards,
+            arrowFloatKrishiR18 5s ease-in-out 1.35s infinite alternate;
+    }
+    @keyframes arrowFloatKrishiR18 {
+        0% { transform: rotate(-14deg) translateY(0); }
+        100% { transform: rotate(-10deg) translateY(-3px); }
+    }
+
+    .projects-view.projects-active .arrow-nyay {
+        animation:
+            chalkArrowSketch 0.50s cubic-bezier(0.16, 1, 0.3, 1) 0.92s forwards,
+            arrowFloatNyayR18 5.5s ease-in-out 1.50s infinite alternate;
+    }
+    .projects-view.projects-active .arrow-bio {
+        animation:
+            chalkArrowSketch 0.50s cubic-bezier(0.16, 1, 0.3, 1) 1.06s forwards,
+            arrowFloatBioR18 5.2s ease-in-out 1.65s infinite alternate;
+    }
+    @keyframes arrowFloatNyayR18 {
+        0% { transform: rotate(88deg) translateY(0); }
+        100% { transform: rotate(92deg) translateY(-4px); }
+    }
+    @keyframes arrowFloatBioR18 {
+        0% { transform: scaleX(-1) rotate(3deg) translateY(0); }
+        100% { transform: scaleX(-1) rotate(5deg) translateY(-4px); }
+    }
+
+    @media (min-width: 1400px) {
+        .arrow-nyay {
+            top: 70.5%; left: 30vw;
+            width: 160px; min-width: 160px; max-width: 160px; height: 48px;
+        }
+        .arrow-krishi {
+            left: 28.5vw;
+            width: 80px; min-width: 80px; max-width: 80px; height: 42px;
+        }
+    }
+
+    /* Plain dotted arrows, no purple glow */
+    .looped-arrow { filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7)); }
+    @keyframes chalkArrowSketch {
+        0% {
+            opacity: 0;
+            transform: scale(0.88);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+        }
+        60% {
+            opacity: 1;
+            transform: scale(1.03);
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+        }
+    }
+}
+
+/* ============================================================
+   r20 - real 3D depth scene + camera travel (desktop only)
+   layers: z-krishi (front) -> z-nyay -> z-bio -> z-back
+   camera: scroll/wheel/arrow keys/nav clicks travel the scene
+   ============================================================ */
+@media (min-width: 769px) {
+    .projects-stage {
+        perspective: 1200px;
+        perspective-origin: 62% 42%;
+    }
+    .cam3d {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        transition: transform 1.15s cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: transform;
+        pointer-events: none;
+    }
+    .zl {
+        position: absolute;
+        inset: 0;
+        transform-origin: 62% 42%;
+        pointer-events: none;
+        transition: filter 1.0s ease, opacity 0.8s ease;
+    }
+    .zl .laptop-wrapper, .zl .interactive-paper-ball,
+    .zl .project-tape, .zl .looped-arrow { pointer-events: auto; }
+    .zl.is-past, .zl.is-past * { pointer-events: none !important; }
+
+    .z-krishi { transform: translateZ(0px); }
+    .z-nyay   { transform: translateZ(-260px) scale(1.2167); }
+    .z-bio    { transform: translateZ(-640px) scale(1.5333); }
+    .z-step1  { transform: translateZ(-700px) scale(1.5833); }
+    .z-step2  { transform: translateZ(-820px) scale(1.6833); }
+    .z-step3  { transform: translateZ(-940px) scale(1.7833); }
+    .z-back   { transform: translateZ(-1180px) scale(1.9833); filter: brightness(.5); }
+
+    /* camera stops (tuned for 1280x800, perspective-origin 62% 42% of stage) */
+    .projects-stage.cam-1 .cam3d { transform: translate3d(-20px, 101px, 300px); }
+    .projects-stage.cam-2 .cam3d { transform: translate3d(10px, -70px, 420px); }
+    .projects-stage.cam-3 .cam3d { transform: translate3d(219px, -275px, 840px); }
+
+    /* which labels show per stop */
+    .zl .project-tape, .zl .looped-arrow { transition: opacity 0.55s ease; }
+    .projects-stage.cam-1 .z-nyay .project-tape, .projects-stage.cam-1 .z-nyay .looped-arrow,
+    .projects-stage.cam-1 .z-bio .project-tape,  .projects-stage.cam-1 .z-bio .looped-arrow { opacity: .12 !important; }
+    .projects-stage.cam-2 .z-krishi .project-tape, .projects-stage.cam-2 .z-krishi .looped-arrow,
+    .projects-stage.cam-2 .z-bio .project-tape,    .projects-stage.cam-2 .z-bio .looped-arrow { opacity: .12 !important; }
+    .projects-stage.cam-3 .z-krishi .project-tape, .projects-stage.cam-3 .z-krishi .looped-arrow,
+    .projects-stage.cam-3 .z-nyay .project-tape,   .projects-stage.cam-3 .z-nyay .looped-arrow { opacity: .12 !important; }
+
+    /* depth dimming per stop */
+    .projects-stage.cam-1 .z-nyay { filter: brightness(.55); }
+    .projects-stage.cam-1 .z-bio  { filter: brightness(.42); }
+    .projects-stage.cam-1 .z-back { filter: brightness(.32); }
+    .projects-stage.cam-2 .z-krishi { filter: brightness(.55); opacity: .10; }
+    .projects-stage.cam-2 .z-bio    { filter: brightness(.5); }
+    .projects-stage.cam-2 .z-back   { filter: brightness(.36); }
+    .projects-stage.cam-3 .z-krishi { opacity: 0; }
+    .projects-stage.cam-3 .z-nyay   { filter: brightness(.5); opacity: 0; }
+    .projects-stage.cam-3 .z-back   { filter: brightness(.4); }
+    .projects-stage.cam-2 .z-krishi *, .projects-stage.cam-3 .z-krishi * { pointer-events: none !important; }
+    .projects-stage.cam-3 .z-nyay * { pointer-events: none !important; }
+
+    /* wide screens: same camera, retuned for the wider stage */
+    @media (min-width: 1400px) {
+        .projects-stage.cam-2 .cam3d { transform: translate3d(10px, -95px, 420px); }
+        .projects-stage.cam-3 .cam3d { transform: translate3d(280px, -275px, 840px); }
+    }
+}
+
+/* ============================================================
+   r21 - G2 rock staircase slabs replace paper bands; layout
+   remapped to the concept cascade (desktop only)
+   ============================================================ */
+@media (min-width: 769px) {
+    /* r23: bands extracted from the G2 concept itself; positions are G2 % coords */
+    .rock-slab { position: absolute; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+    .slab-a { left: 22.0%; top: 31.4%; width: 54.7vw; max-width: none; }
+    .slab-b { left: 23.7%; top: 57.3%; width: 62.5vw; max-width: none; }
+    .slab-c { left: 22.2%; top: 75.1%; width: 60.9vw; max-width: none; }
+    .slab-d { left: 24.1%; top: -1%;   width: 39.1vw; max-width: none; }
+    .slab-e { left: 21.0%; top: 88%;   width: 23.4vw; max-width: none; }
+    .slab-f { left: 65.7%; top: 86%;   width: 31.3vw; max-width: none; }
+
+    /* laptops at the approved large size, bases seated on the step lips */
+    .laptop-krishi { top: 10.5% !important; left: 30.7% !important; width: 340px !important; max-width: none !important; }
+    .laptop-nyay   { top: 34.2% !important; left: 49.9% !important; width: 360px !important; max-width: none !important; }
+    .laptop-bio    { top: 52.9% !important; left: 37.4% !important; width: 375px !important; max-width: none !important; }
+
+    /* ball perches on NyayVivek's top-right corner like the concept */
+    .z-nyay .interactive-paper-ball { top: -18px !important; left: 254px !important; }
+
+    /* labels on black, right side, like the concept */
+    .tape-krishi { top: 14.2% !important; left: 67.2% !important; }
+    .tape-nyay   { top: 37.1% !important; left: 82.2% !important; }
+    .tape-bio    { top: 72.8% !important; left: 72.4% !important; }
+
+    /* arrows run laptop edge -> label */
+    .arrow-krishi { top: 14.6% !important; left: 59.5% !important; }
+    .arrow-nyay   { top: 37.4% !important; left: 76.0% !important; }
+    .arrow-bio    { top: 69.9% !important; left: 63.7% !important; }
+
+    .cam3d { transition: none; } /* r21: JS lerps the transform per frame */
+
+    /* G2's depth shading is baked into the extracted bands - near-neutral */
+    .z-nyay  { filter: brightness(.98); }
+    .z-bio   { filter: brightness(.95); }
+    .z-step1 { filter: brightness(1); }
+    .z-step2 { filter: brightness(.98); }
+    .z-step3 { filter: brightness(.96); }
+    .z-back  { filter: brightness(.85); }
+}
+
+/* Keep the NyayVivek connector short at wide viewports too. The old wide
+   rule enlarged its rotated bounds into the adjacent project note. */
+@media (min-width: 769px) {
+    .arrow-nyay {
+        width: 64px;
+        min-width: 64px;
+        max-width: 64px;
+        height: 48px;
+    }
+}
+
+/* Numbered original slabs, kept at their natural aspect ratios. Consecutive
+   pieces overlap vertically: no detached horizontal floating shelves. */
+@media (min-width: 769px) {
+    .slab-d { left: 24%; top: -13%; width: 59vw; }
+    .slab-a { left: 27%; top: 23%; width: 62vw; }
+    .slab-b { left: 29%; top: 53%; width: 65vw; }
+    .slab-c { left: 25%; top: 71%; width: 62vw; }
+    .slab-e { left: 17%; top: 88%; width: 31vw; }
+    .slab-f { left: 66%; top: 77%; width: 33vw; }
+    .rock-slab { filter: drop-shadow(13px 24px 11px rgba(0,0,0,.95)); }
+    .z-back { filter: brightness(.55); }
+    .z-step1 { filter: brightness(.85); }
+    .z-step2 { filter: brightness(.72); }
+    .z-step3 { filter: brightness(.86); }
+}
+@media (min-width: 769px) {
+    /* Occlusion stays inside each real silhouette, darkest at the back
+       where the next slab meets it, rather than a soft floating halo. */
+    .rock-slab.slab-ao {
+        filter: brightness(0);
+        opacity: .84;
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.8) 20%, transparent 70%);
+        mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.8) 20%, transparent 70%);
+    }
+    .slab-b.slab-ao {
+        opacity: .95;
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.85) 25%, transparent 78%);
+        mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.85) 25%, transparent 78%);
+    }
+}
+@media (min-width: 769px) {
+    .slab-d { width: 46vw; top: -8%; }
+    .slab-a { top: 22%; transform-origin: 0 0; transform: rotate(6deg); }
+    .slab-b { top: 51%; }
+    .slab-c { left: 29%; width: 58vw; transform-origin: 0 0; transform: rotate(3deg); }
+}
+@media (min-width: 769px) {
+    .projects-view.projects-active .laptop-contact-shadow {
+        animation: none;
+        bottom: -6px;
+        height: 18px;
+        opacity: .95;
+        transform: none;
+        filter: blur(3px);
+        background: radial-gradient(ellipse at center, rgba(0,0,0,.98) 0%, rgba(0,0,0,.75) 45%, transparent 74%);
+    }
+}
+@media (min-width: 1400px) {
+    .arrow-nyay { left: 74% !important; }
+}
+
+/* Seat the feet on the lit tread, rather than letting the device float
+   independently above it. The actual app screenshots are unchanged. */
+@media (min-width: 769px) {
+    .projects-view.projects-active .laptop-wrapper {
+        animation: none;
+        opacity: 1;
+        filter: none;
+    }
+    .laptop-krishi { left: 36.5% !important; top: 10.4% !important; transform: rotate(5deg); }
+    .laptop-nyay { left: 55% !important; top: 35.4% !important; transform: rotate(-.5deg); }
+    .laptop-bio { left: 42% !important; top: 55.2% !important; transform: rotate(5deg); }
+    .projects-view.projects-active .laptop-wrapper .laptop-device {
+        animation: none;
+        transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
+    }
+    .laptop-screen { aspect-ratio: 16 / 8; }
+    .laptop-lid { transform: skewX(-4deg); transform-origin: bottom center; }
+    .laptop-base-deck {
+        height: 60px;
+        transform: rotateX(52deg);
+        width: 110%;
+        margin-left: 0;
+        box-shadow: inset 0 1px 0 #fff8, 0 7px 7px rgba(0,0,0,.95);
+    }
+    .keyboard-well { height: 27px; }
+    .trackpad { height: 13px; margin-top: 3px; }
+    .projects-view.projects-active .laptop-contact-shadow {
+        bottom: 10px;
+        width: 106%;
+        left: -3%;
+    }
+}
+@media (min-width: 769px) {
+    /* Her deeper black-background slab version already has lit top edges
+       and dark, thick faces. Preserve that detail instead of dimming it. */
+    .z-step1, .z-step2, .z-step3 { filter: none; }
+    .z-back { filter: brightness(.76); }
+    .rock-slab.slab-ao { opacity: .45; }
+    .slab-b.slab-ao { opacity: .62; }
+}
+@media (min-width: 769px) {
+    /* Match the concept's device-to-tread ratio. The wider keyboard deck
+       supplies the large footprint while leaving lit rock visible around it. */
+    .laptop-krishi { left: 38% !important; top: 11.4% !important; width: 280px !important; }
+    .laptop-nyay { left: 55.5% !important; top: 35.4% !important; width: 280px !important; }
+    .laptop-bio { left: 42% !important; top: 55.2% !important; width: 300px !important; }
+    .laptop-screen { aspect-ratio: 16/9; }
+    .arrow-krishi { left: 61.5% !important; }
+    .projects-view.projects-active .arrow-nyay {
+        animation: none;
+        transform: none;
+        opacity: 1;
+        top: 38% !important;
+        left: 78% !important;
+        width: 56px;
+        height: 36px;
+    }
+    .z-nyay .interactive-paper-ball { left: 238px !important; }
+}
+@media (min-width: 769px) {
+    .projects-view.projects-active .arrow-krishi,
+    .projects-view.projects-active .arrow-bio {
+        animation: none;
+        transform: none;
+        opacity: 1;
+    }
+    .arrow-krishi { left: 59.5% !important; top: 13% !important; width: 100px; min-width: 100px; max-width: 100px; height: 50px; }
+    .arrow-bio { left: 67% !important; top: 70% !important; width: 72px; min-width: 72px; max-width: 72px; height: 55px; }
+}
+@media (min-width: 769px) {
+    .projects-view { background: #0b0b0b; }
+    .desk-plane { left: 6%; right: auto; bottom: 8%; width: 82px; }
+}
+@media (min-width: 769px) {
+    .laptop-krishi { left: 35.6% !important; top: 10% !important; width: 340px !important; }
+    .laptop-nyay { left: 51.2% !important; top: 31.5% !important; width: 360px !important; }
+    .laptop-bio { left: 39.1% !important; top: 53% !important; width: 375px !important; }
+    .laptop-screen { aspect-ratio: 16/8; }
+    .z-nyay .interactive-paper-ball { left: 300px !important; }
+    .desk-plane { left: 5.8%; bottom: 3.8%; width: 68px; }
+    .slab-c { width: 62vw; left: 28%; }
+}
+@media (min-width: 769px) {
+    .projects-view.projects-active .laptop-wrapper .laptop-contact-shadow {
+        animation: none !important;
+        transform: none !important;
+        filter: blur(3px);
+    }
+    .projects-stage .laptop-wrapper { box-shadow: none !important; }
+}
+/* A device and its tread are a single physical depth unit. The previous
+   compensated overview hid their different depths until the camera moved. */
+@media (min-width:769px) {
+    .z-step1 { transform:translateZ(0); }
+    .z-step2 { transform:translateZ(-260px) scale(1.2167); }
+    .z-step3 { transform:translateZ(-640px) scale(1.5333); }
+    .slab-a { left:27%; top:28%; width:62vw; transform:none; }
+    .slab-b { left:27%; top:47%; width:64vw; transform:none; }
+    .slab-c { left:27%; top:65%; width:66vw; transform:none; }
+    .rock-slab { filter:drop-shadow(0 8px 3px rgba(0,0,0,.92)); }
+    .projects-view.projects-active .laptop-wrapper .laptop-contact-shadow {
+        bottom:17px; left:-2%; width:107%; height:13px;
+        opacity:1; filter:blur(2px); background:radial-gradient(ellipse,#000 5%,#000b 48%,transparent 74%);
+    }
+    .laptop-base-deck { box-shadow:inset 0 1px 0 #fff8,0 3px 3px #000e; }
+}
+@media(min-width:769px) {
+    /* Keep the full stack on one dolly plane so perspective cannot pull a
+       device away from its tread or sort an upper slab through a lower lid. */
+    .z-step1,.z-step2,.z-step3,.z-krishi,.z-nyay,.z-bio { transform:translateZ(0); }
+}
+@media(min-width:769px) {
+    /* The compact, thick-faced block from the preferred sheet supports
+       each device without the long fragmented skirt of the earlier cuts. */
+    .slab-a { left:30%; top:28%; width:48vw; }
+    .slab-b { left:30%; top:47%; width:58vw; }
+    .slab-c { left:29%; top:65%; width:64vw; }
+    .rock-slab.slab-ao { opacity:.24; mask-image:linear-gradient(#000,transparent 38%); -webkit-mask-image:linear-gradient(#000,transparent 38%); }
+}
+
+/* One intact staircase. No independently positioned or recut shelves. */
+.z-stack { display:none; }
+@media(min-width:769px) {
+  .z-stack { display:block; transform:translateZ(0); filter:none; }
+  .rock-stack { position:absolute; left:0; top:0; width:100%; height:auto; max-width:none; pointer-events:none; user-select:none; }
+  .z-krishi,.z-nyay,.z-bio { transform:translateZ(0); }
+}
+
+.camera-connectors { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; z-index:30; }
+.camera-connectors > path { fill:none; stroke:#e9d9ff; stroke-width:2.2; stroke-dasharray:5 6; }
+@media(min-width:769px) {
+  .laptop-bio { left:37.6% !important; top:51.7% !important; }
+}
+
+@media(min-width:769px) {
+  .projects-view.camera-closeup .projects-sidebar .projects-subheading { white-space:normal; width:245px; max-width:245px; }
+}
+@media(min-width:769px) {
+  .rock-stack { height:100%; object-fit:fill; }
+}
+/* Smaller devices, with their feet kept on the same three lit tops. */
+@media(min-width:769px) {
+  .laptop-krishi { width:290px !important; left:37.6% !important; top:14% !important; }
+  .laptop-nyay { width:305px !important; left:53.1% !important; top:35.4% !important; }
+  .laptop-bio { width:320px !important; left:39.6% !important; top:56.1% !important; }
+  .z-nyay .interactive-paper-ball { left:253px !important; }
+}
+
+/* Atmospheric environment: actual separate camera-depth planes, never the supporting treads. */
+.depth-environment { display:none; }
+@media(min-width:769px) {
+  .depth-environment { display:block; position:absolute; inset:0; transform-style:preserve-3d; pointer-events:none; }
+  .depth-plane { position:absolute; inset:0; transform-origin:62% 42%; will-change:transform; }
+  .depth-plane img { position:absolute; max-width:none; height:auto; pointer-events:none; }
+  .depth-far { transform:translateZ(-1650px) scale(2.375); filter:brightness(.29) saturate(.45) blur(3.7px); opacity:.72; }
+  .depth-far img { width:76%; left:50%; top:-19%; transform:rotate(-17deg); }
+  .depth-middle { transform:translateZ(-920px) scale(1.767); filter:brightness(.38) saturate(.60) blur(2px); opacity:.82; }
+  .depth-middle img { width:82%; left:32%; top:12%; transform:rotate(-14deg); }
+  .depth-near { transform:translateZ(-430px) scale(1.358); filter:brightness(.48) saturate(.72) blur(.9px); opacity:.9; }
+  .depth-near img { width:86%; left:40%; top:51%; transform:rotate(12deg); }
+  .depth-haze { position:absolute; inset:-30%; transform:translateZ(-350px) scale(1.292); background:radial-gradient(ellipse at 73% 16%,#9b87b91c,transparent 46%),linear-gradient(90deg,#0b0b0b 11%,transparent 49%); pointer-events:none; }
+  .z-stack { filter:drop-shadow(0 15px 12px #000d) drop-shadow(-1px -1px 0 #bba0ed30); }
+  .z-stack::after { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 48% 26%,transparent 25%,#0301084a 100%); mask-image:url('assets/rock-stack.png'); mask-size:100% 100%; }
+  .projects-view::after { content:""; position:absolute; inset:0; pointer-events:none; z-index:2; background:radial-gradient(ellipse at 62% 47%,transparent 48%,#03020545 100%); }
+  .projects-sidebar,.camera-connectors { z-index:30; }
+  .projects-view.projects-active .laptop-wrapper .laptop-contact-shadow { height:17px; opacity:1; filter:blur(2.7px); background:radial-gradient(ellipse,#000 10%,#000d 38%,transparent 73%); }
+}
+@media(min-width:769px) {
+  /* Keep image and devices in DOM paint order at the same plane. A CSS
+     filter on the whole support layer changes compositing at close range. */
+  .z-stack { filter:none; }
+  .z-stack::after { display:none; }
+}
+
+@media(min-width:769px) { .depth-far,.depth-middle,.depth-near {filter:none;opacity:1;} }
+@media(min-width:769px) {
+  .depth-plane img { mask-image:radial-gradient(ellipse at 52% 40%,#000 42%,transparent 73%); }
+}
+
+@media(min-width:769px) {
+  .project-tape { width:200px !important; max-width:200px !important; }
+  .tape-desc { width:200px !important; max-width:200px !important; }
+  .camera-connectors > path {stroke-dasharray:3 6;stroke-linecap:round;filter:none;}
+}
+
+@media(min-width:769px) { #interactivePaperBallDesk.perched {animation:none !important;transform:none;} }

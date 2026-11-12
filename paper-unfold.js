@@ -22,6 +22,8 @@
     let vertexU = [];
     let vertexV = [];
     let isInitialized = false;
+    let lastProgress = 0;
+    let cornerEntry = false;
     let canvasEl = null;
 
     // Dimensions calibrated to exact aspect ratio of paper-slide.png (1024 x 470)
@@ -162,7 +164,7 @@
         // Load the exact paper texture with sRGB color space
         const loader = new THREE.TextureLoader();
         const texture = loader.load("assets/paper-slide.png", () => {
-            if (isInitialized) renderAt(0);
+            if (isInitialized) renderAt(lastProgress);
         });
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -222,6 +224,7 @@
         if (!isInitialized || !mesh) return;
 
         const p = Math.min(Math.max(progress, 0), 1);
+        lastProgress = p;
         const posAttr = geometry.attributes.position;
         const count = posAttr.count;
 
@@ -232,7 +235,8 @@
             }
             posAttr.needsUpdate = true;
             mesh.rotation.set(0, 0, 0);
-            mesh.position.set(0, 0, 0);
+            mesh.position.set(0,0,0);
+            mesh.scale.set(1,1,1);
             renderer.render(scene, camera);
             return;
         }
@@ -285,13 +289,16 @@
         mesh.rotation.y = -0.16 * globalRemaining;
         mesh.rotation.z = -0.06 * globalRemaining;
 
-        mesh.position.set(0, 0, 0);
-        mesh.scale.set(1.0, 1.0, 1.0);
+        const entryRemain = cornerEntry ? Math.pow(1-p,1.8) : 0;
+        mesh.position.set(-3.25*entryRemain,.80*entryRemain,0);
+        const entryScale = cornerEntry ? .48+.52*Math.min(1,p*2) : 1;
+        mesh.scale.set(entryScale,entryScale,entryScale);
 
         renderer.render(scene, camera);
     }
 
     // Public API
+    window.setPaperUnfoldCornerEntry = function(value) {cornerEntry=!!value;};
     window.initPaperUnfold = init;
     window.updatePaperUnfold = function (progress) {
         if (!isInitialized) init();
