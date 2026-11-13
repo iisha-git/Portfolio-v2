@@ -1176,36 +1176,36 @@ html {
    Top part (.rail-line, .rail-title) sits on dark background -> pure white (#ffffff)
    Bottom part (icons, .rail-dot) sits on light purple paper cutout -> deep black ink (#0d0d0d)
    ------------------------------------------------------------- */
-.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-line,
+.hero:not(.about-view):not(.projects-view-active):not(.slide):not(.sheet-open) .social-rail .rail-line,
 .social-rail.home-split .rail-line {
     background: #ffffff;
 }
 
-.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-title,
+.hero:not(.about-view):not(.projects-view-active):not(.slide):not(.sheet-open) .social-rail .rail-title,
 .social-rail.home-split .rail-title {
     color: #ffffff;
     font-weight: 700;
 }
 
-.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail a,
+.hero:not(.about-view):not(.projects-view-active):not(.slide):not(.sheet-open) .social-rail a,
 .social-rail.home-split a {
     color: #0d0d0d;
     text-decoration: none !important;
 }
 
-.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail a:hover,
+.hero:not(.about-view):not(.projects-view-active):not(.slide):not(.sheet-open) .social-rail a:hover,
 .social-rail.home-split a:hover {
     color: #444444;
     opacity: 0.8;
     text-decoration: none !important;
 }
 
-.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-plane,
+.hero:not(.about-view):not(.projects-view-active):not(.slide):not(.sheet-open) .social-rail .rail-plane,
 .social-rail.home-split .rail-plane {
     color: #0d0d0d;
 }
 
-.hero:not(.about-view):not(.projects-view-active):not(.slide) .social-rail .rail-dot,
+.hero:not(.about-view):not(.projects-view-active):not(.slide):not(.sheet-open) .social-rail .rail-dot,
 .social-rail.home-split .rail-dot {
     background: #0d0d0d;
 }
@@ -4354,3 +4354,455 @@ html {
 }
 
 @media(min-width:769px) { #interactivePaperBallDesk.perched {animation:none !important;transform:none;} }
+
+/* ===============================================================
+   ACHIEVEMENTS ON THE SHEET - the unfolded paper opens a composed
+   scrapbook page. Desktop: the wide banner carries a full spread
+   (SIH polaroid as the hero item, two smaller frames, rubber stamp,
+   handwritten notes). Phones: the paper is a tall portrait sheet
+   (own aspect in paper-unfold.js) and the frames stack in a
+   deliberately overlapped column. Photo slots are placeholders -
+   drop real photos into assets/achievements/ with the same names.
+   =============================================================== */
+.sheet-achieve {
+    position: absolute;
+    inset: 16.5% 4% 5%;
+    z-index: 30;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .5s ease, visibility .5s ease;
+}
+
+/* ultrawide: the height-fitted sheet narrows, so pull the content in */
+@media(min-width:769px) and (min-aspect-ratio: 21/10) {
+    .sheet-achieve { inset: 13% 9% 4%; }
+}
+
+.hero.sheet-open .sheet-achieve {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.sheet-heading {
+    position: absolute;
+    left: 5%;
+    top: 0;
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(44px, 5vw, 72px);
+    color: #2b2118;
+    transform: rotate(-2.5deg);
+    line-height: 1;
+    padding: 0 18px;
+}
+
+.sheet-heading::after {
+    content: "";
+    position: absolute;
+    inset: -14% -9%;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' preserveAspectRatio='none'><path d='M8 34 C 20 8, 90 2, 150 8 C 188 12, 196 26, 188 40 C 172 58, 60 60, 24 50 C 4 44, 2 40, 10 32' fill='none' stroke='%237c3aed' stroke-width='2.4' stroke-linecap='round' opacity='.85'/></svg>") no-repeat center / 100% 100%;
+    pointer-events: none;
+}
+
+/* ===============================================================
+   THE PRIZE WALL - every win is a different OBJECT pasted on the
+   sheet: a newspaper clipping (SIH), a ribbon rosette (runner-up),
+   a ticket stub (Eureka). Items slap down one by one as the paper
+   finishes opening; the WINNERS stamp slams on last.
+   =============================================================== */
+.win-clip, .win-ribbon, .win-ticket, .ticket-photo {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(-30px) rotate(calc(var(--r, 0deg) - 7deg)) scale(1.1);
+}
+
+.hero.sheet-open .win-clip,
+.hero.sheet-open .win-ribbon,
+.hero.sheet-open .win-ticket,
+.hero.sheet-open .ticket-photo {
+    animation: winSlap .55s cubic-bezier(.2, 1.35, .42, 1) backwards;
+    opacity: 1;
+    transform: translateY(0) rotate(var(--r, 0deg)) scale(1);
+}
+
+.hero.sheet-open .win-clip   { animation-delay: .30s; }
+.hero.sheet-open .win-ribbon { animation-delay: .58s; }
+.hero.sheet-open .ticket-photo { animation-delay: .72s; }
+.hero.sheet-open .win-ticket { animation-delay: .92s; }
+
+@keyframes winSlap {
+    0%   { opacity: 0; transform: translateY(-30px) rotate(calc(var(--r, 0deg) - 7deg)) scale(1.1); }
+    60%  { opacity: 1; transform: translateY(3px)  rotate(calc(var(--r, 0deg) + 1.6deg)) scale(0.99); }
+    100% { opacity: 1; transform: translateY(0)    rotate(var(--r, 0deg)) scale(1); }
+}
+
+/* --- object 1: the newspaper clipping --- */
+.win-clip {
+    left: 34%;
+    top: 12%;
+    width: clamp(340px, 30vw, 460px);
+    --r: -2deg;
+    z-index: 2;
+}
+
+.clip-paper {
+    background: #f5efdd;
+    background-image: repeating-linear-gradient(0deg, rgba(120, 100, 70, 0.05) 0 2px, transparent 2px 5px);
+    padding: 14px 16px 18px;
+    box-shadow: 0 14px 30px rgba(43, 33, 24, 0.4);
+    clip-path: polygon(0 2%, 8% 0, 31% 1.5%, 55% 0, 79% 2%, 100% .5%, 99.4% 22%, 100% 47%, 99% 73%, 100% 96%, 76% 99%, 52% 97.5%, 28% 100%, 6% 98%, 0 96.5%, 1% 72%, 0 48%, .8% 24%);
+}
+
+.clip-masthead {
+    font-family: 'Oswald', sans-serif;
+    font-size: .62rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #6b5a41;
+    text-align: center;
+    border-bottom: 1.5px solid #b3a586;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+}
+
+.clip-headline {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(22px, 2vw, 30px);
+    line-height: 1.04;
+    color: #2b2118;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+.clip-photo {
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    background: #e8e0cf;
+    box-shadow: inset 0 0 0 1px #c9bb9c;
+}
+
+.clip-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(.85) contrast(1.02);
+}
+
+.clip-col {
+    font-family: 'Oswald', sans-serif;
+    font-size: .68rem;
+    line-height: 1.5;
+    color: #4d4030;
+    margin: 8px 0 0;
+    column-count: 1;
+    text-align: left;
+}
+
+/* rubber stamp, slams on after the clipping lands */
+.stamp-win {
+    position: absolute;
+    top: auto;
+    bottom: -74px;
+    right: -18px;
+    z-index: 3;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(16px, 1.4vw, 21px);
+    letter-spacing: 2.5px;
+    color: #7c3aed;
+    border: 3px double #7c3aed;
+    border-radius: 50%;
+    padding: 13px 11px;
+    transform: rotate(14deg) scale(2.4);
+    opacity: 0;
+    background: rgba(253, 250, 243, 0.35);
+}
+
+.hero.sheet-open .stamp-win {
+    animation: stampSlam .42s cubic-bezier(.2, 1.5, .4, 1) 1.15s backwards;
+    opacity: .88;
+    transform: rotate(14deg) scale(1);
+}
+
+@keyframes stampSlam {
+    0%  { opacity: 0; transform: rotate(26deg) scale(2.4); }
+    70% { opacity: .9; transform: rotate(11deg) scale(0.94); }
+    100%{ opacity: .88; transform: rotate(14deg) scale(1); }
+}
+
+/* --- object 2: the ribbon rosette --- */
+/* --- object 2: the runner-up rosette, pinned on a framed photo --- */
+.win-ribbon {
+    right: 6%;
+    top: 30%;
+    width: clamp(230px, 19vw, 300px);
+    --r: 2deg;
+    z-index: 2;
+}
+
+.ribbon-frame {
+    position: relative;
+    background: #fdfaf3;
+    padding: 10px 10px 12px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
+}
+
+.ribbon-frame::before,
+.ribbon-frame::after {
+    content: "";
+    position: absolute;
+    width: 54px;
+    height: 18px;
+    background: rgba(196, 181, 253, 0.85);
+    clip-path: polygon(3% 12%, 97% 0%, 100% 88%, 0% 100%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.ribbon-frame::before { top: -9px; left: 14%; transform: rotate(-5deg); }
+.ribbon-frame::after  { top: -8px; right: 14%; transform: rotate(4deg); }
+
+.ribbon-photo img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+.ribbon-award {
+    position: absolute;
+    top: -26px;
+    left: -22px;
+    width: 84px;
+    height: 104px;
+    margin: 0;
+    transform: rotate(-9deg);
+    z-index: 3;
+    filter: drop-shadow(0 6px 10px rgba(43, 33, 24, 0.35));
+}
+
+.ribbon-tail {
+    position: absolute;
+    top: 48px;
+    width: 20px;
+    height: 52px;
+    background: linear-gradient(160deg, #8b6ee8, #6d28d9);
+    clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+    box-shadow: 0 4px 8px rgba(43, 33, 24, .3);
+}
+
+.tail-l { left: 17px; transform: rotate(9deg); }
+.tail-r { right: 17px; transform: rotate(-9deg); background: linear-gradient(200deg, #9d7ff0, #7c3aed); }
+
+.ribbon-medal {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 50%, #ede2cb 0 55%, transparent 56%),
+        repeating-conic-gradient(#7c3aed 0 12deg, #a78bfa 12deg 24deg);
+    box-shadow: 0 8px 18px rgba(43, 33, 24, .4), inset 0 0 0 3px rgba(124, 58, 237, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ribbon-medal-in {
+    font-family: 'Anton', sans-serif;
+    font-size: 1.05rem;
+    color: #5b21b6;
+    transform: rotate(-2deg);
+}
+
+.ribbon-cap {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(16px, 1.4vw, 21px);
+    line-height: 1.15;
+    color: #5b21b6;
+    text-align: center;
+    margin: 8px 0 0;
+}
+
+/* --- object 3: the ticket stub --- */
+.win-ticket {
+    left: 9%;
+    right: auto;
+    top: 27%;
+    bottom: auto;
+    width: clamp(260px, 22vw, 340px);
+    --r: -1.6deg;
+    z-index: 2;
+}
+
+.ticket-body {
+    display: flex;
+    background: #fdfaf3;
+    box-shadow: 0 12px 26px rgba(43, 33, 24, 0.38);
+    clip-path: polygon(0 0, 100% 0, 100% 38%, 97.5% 50%, 100% 62%, 100% 100%, 0 100%, 0 62%, 2.5% 50%, 0 38%);
+}
+
+.ticket-main {
+    flex: 1;
+    padding: 14px 16px;
+    border-right: 2px dashed #c9bb9c;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.ticket-label {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #5b21b6;
+    line-height: 1;
+}
+
+.ticket-event {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(15px, 1.4vw, 20px);
+    letter-spacing: 1px;
+    color: #2b2118;
+}
+
+.ticket-sub {
+    font-family: 'Oswald', sans-serif;
+    font-size: .66rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6b5a41;
+}
+
+.ticket-stub {
+    width: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Anton', sans-serif;
+    font-size: 1rem;
+    color: #7c3aed;
+    transform: rotate(-90deg);
+    letter-spacing: 1px;
+}
+
+/* zonals photo: the sheet's centerpiece, the ticket tucks over its top edge */
+.ticket-photo {
+    position: absolute;
+    left: 8%;
+    top: 34%;
+    width: clamp(230px, 20vw, 320px);
+    background: #fdfaf3;
+    padding: 7px 7px 9px;
+    box-shadow: 0 14px 30px rgba(43, 33, 24, 0.38);
+    --r: 2deg;
+    z-index: 1;
+}
+
+.ticket-photo img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+.ticket-photo::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    width: 62px;
+    height: 19px;
+    background: rgba(196, 181, 253, 0.85);
+    clip-path: polygon(3% 12%, 97% 0%, 100% 88%, 0% 100%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    transform: translateX(-50%) rotate(-4deg);
+}
+
+/* hand-drawn plane + trail filling the top-right gap (decoration, no text) */
+.sheet-doodle {
+    position: absolute;
+    right: 6%;
+    top: 2.5%;
+    width: clamp(200px, 22vw, 340px);
+    opacity: 0;
+    transform: rotate(4deg);
+    transition: opacity .5s ease 1s;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.hero.sheet-open .sheet-doodle { opacity: .9; }
+
+@media(max-width:768px) {
+    .sheet-doodle { display: none; }
+}
+
+/* handwritten side notes (unchanged behaviour) */
+.frame-note {
+    position: absolute;
+    font-family: 'Caveat', cursive;
+    font-weight: 600;
+    font-size: clamp(19px, 1.9vw, 28px);
+    color: #7c3aed;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .45s ease .55s;
+    z-index: 4;
+}
+
+.sheet-scribble {
+    position: absolute;
+    left: 12%;
+    right: auto;
+    bottom: 11%;
+    font-family: 'Caveat', cursive;
+    font-weight: 600;
+    font-size: clamp(20px, 2vw, 30px);
+    color: #5b21b6;
+    transform: rotate(-2deg);
+    opacity: 0;
+    transition: opacity .45s ease .7s;
+}
+
+.note-sih    { left: -1%;  top: auto; bottom: -10%; transform: rotate(-4deg); }
+.note-ai     { left: auto; right: 2%; top: auto; bottom: -16%; transform: rotate(-3deg); }
+.note-eureka { left: 15%;  right: auto; top: calc(100% + 12vw + 12px); bottom: auto; transform: rotate(3deg); }
+
+.hero.sheet-open .frame-note,
+.hero.sheet-open .sheet-scribble {
+    opacity: 1;
+}
+
+
+@media(min-width:769px) { #interactivePaperBallDesk.perched {animation:none !important;transform:none;} }
+
+@media(min-width:769px) and (prefers-reduced-motion:no-preference) {
+ #interactivePaperBallDesk.perched .ball-sprite {animation:projectBallInvite 1.65s ease-in-out infinite;transform-origin:50% 100%;}
+ @keyframes projectBallInvite {0%,58%,100%{transform:translateY(0) rotate(0)} 26%{transform:translateY(-12px) rotate(5deg)} 42%{transform:translateY(0) scale(1.04,.95)} }
+}
+
+.hero.cinematic-unfold .sheet-achieve {visibility:visible;opacity:var(--cinematic-ink,0);transition:none;}
+.hero.cinematic-unfold .win-clip,.hero.cinematic-unfold .win-ribbon,.hero.cinematic-unfold .win-ticket,.hero.cinematic-unfold .ticket-photo {animation:none;opacity:1;transform:rotate(var(--r,0deg));}
+.hero.cinematic-unfold .stamp-win,.hero.cinematic-unfold .sheet-doodle,.hero.cinematic-unfold .frame-note,.hero.cinematic-unfold .sheet-scribble {animation:none;opacity:1;transition:none;}
+
+.hero.cinematic-unfold .stamp-win {transform:rotate(14deg) scale(1);opacity:.88;}
+/* Held for a separate design review; the rejected focus sketches stay out of this preview. */
+.project-focus-details {display:none !important;}
+
+.hero.fall-tracking .projects-sidebar,.hero.fall-tracking .camera-connectors,.hero.fall-tracking .navbar,.hero.fall-tracking .social-rail {opacity:0 !important;transition:opacity .25s ease;}
+/* The original foreground artwork ends at the old viewport edge. Let its
+   underside dissolve into the deeper atmosphere rather than expose a crop. */
+.hero.fall-tracking .rock-stack {mask-image:linear-gradient(#000 76%,transparent 100%);}
+
+@media(min-width:769px){
+ .rock-rest-ball{position:absolute!important;left:calc(64% - 20px)!important;top:calc(26% - 33px)!important;width:40px!important;height:40px!important;z-index:5;cursor:default!important;}
+ .rock-rest-ball .ball-sprite{width:100%;height:100%;object-fit:contain;}
+}

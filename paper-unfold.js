@@ -16,7 +16,7 @@
 // ===============================================================
 
 (function () {
-    let renderer, scene, camera, mesh, geometry;
+    let renderer, scene, camera, mesh, geometry, paperAmbient, paperKey;
     let flatPositions = [];
     let crumpledPositions = [];
     let vertexU = [];
@@ -24,14 +24,27 @@
     let isInitialized = false;
     let lastProgress = 0;
     let cornerEntry = false;
+    let fallEntry = false;
     let canvasEl = null;
+    const curlCache=[];
+    let buildingCurlCache=false;
+    let originalPaperMaterial,softPaperMaterial;
+    let handoffPositions=null;
+    let handoffDiameter=0;
+    let handoffCenter={x:0,y:0},handoffAngle=0,handoffSize=0;
+    const handoffBlend={value:1};
 
-    // Dimensions calibrated to exact aspect ratio of paper-slide.png (1024 x 470)
-    // Sized for full-width immersive banner presence across the screen
-    const PLANE_W = 10.5;
-    const PLANE_H = 10.5 / (1024 / 470); // ~4.82
-    const COLS = 54;
-    const ROWS = 28;
+    // Dimensions calibrated to the sheet texture aspect ratios.
+    // Desktop uses her ORIGINAL torn paper (assets/paper-slide.png, 1024 x 470):
+    // the wide full-bleed banner sheet from the first design.
+    const PORTRAIT = false;
+    const PLANE_W = PORTRAIT ? 5.3 : 10.5;
+    const PLANE_H = PORTRAIT ? 5.3 * (816 / 470) : 10.5 / (1024 / 470); // ~9.2 : ~4.82
+    const TEXTURE_URL = "assets/paper-slide.png";
+    // Desktop: tiny downward nudge so the fixed top nav clears the banner's top edge.
+    const SHEET_Y = PORTRAIT ? 0 : -0.1;
+    const COLS = 64;
+    const ROWS = 32;
 
     // 8 chaotic, multi-angle origami crease directions (breaks any vertical/curtain symmetry)
     const PHASES = [1.2, 3.7, 0.5, 4.9, 2.1, 5.4, 0.8, 3.1];
@@ -119,10 +132,10 @@
         }
 
         // Calibrated warm paper lighting: soft, matte, realistic kraft shading
-        const ambient = new THREE.AmbientLight(0xebdcc8, 0.60);
+        const ambient = paperAmbient = new THREE.AmbientLight(0xebdcc8, 0.60);
         scene.add(ambient);
 
-        const keyLight = new THREE.DirectionalLight(0xfffaea, 0.35);
+        const keyLight = paperKey = new THREE.DirectionalLight(0xfffaea, 0.35);
         keyLight.position.set(3.0, 4.0, 4.5);
         scene.add(keyLight);
 
@@ -163,7 +176,7 @@
 
         // Load the exact paper texture with sRGB color space
         const loader = new THREE.TextureLoader();
-        const texture = loader.load("assets/paper-slide.png", () => {
+        const texture = loader.load(TEXTURE_URL, () => {
             if (isInitialized) renderAt(lastProgress);
         });
         texture.generateMipmaps = true;
@@ -177,8 +190,7 @@
         const material = new THREE.MeshStandardMaterial({
             map: texture,
             transparent: true,
-            roughness: 0.96,
-            metalness: 0.0,
+            roughness:0.96,metalness:0,
             flatShading: true,
             side: THREE.DoubleSide,
             alphaTest: 0.02
@@ -186,9 +198,39 @@
 
         mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
+        originalPaperMaterial=material;
+        const ballTexture=loader.load("assets/paper-ball.png");
+        if(THREE.sRGBEncoding)ballTexture.encoding=THREE.sRGBEncoding;
+        softPaperMaterial=new THREE.MeshLambertMaterial({map:texture,transparent:true,flatShading:false,side:THREE.DoubleSide,alphaTest:.02});
+        softPaperMaterial.onBeforeCompile=shader=>{
+            shader.uniforms.handoffBall={value:ballTexture};
+            shader.uniforms.handoffBlend=handoffBlend;
+            shader.fragmentShader='uniform sampler2D handoffBall;uniform float handoffBlend;\n'+shader.fragmentShader;
+            shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+                vec4 ballSample=texture2D(handoffBall,vUv);
+                ballSample.rgb=mapTexelToLinear(ballSample).rgb;
+                float revealRadius=mix(0.20,0.73,handoffBlend);
+                float roundedReveal=1.0-smoothstep(revealRadius-.035,revealRadius+.035,length(vUv-.5));
+                diffuseColor.a=mix(ballSample.a,diffuseColor.a*roundedReveal,handoffBlend);
+            `);
+            shader.fragmentShader=shader.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );','gl_FragColor = vec4( mix(ballSample.rgb,outgoingLight,handoffBlend), diffuseColor.a );');
+        };
+        mesh.material=softPaperMaterial;renderer.compile(scene,camera);
+        mesh.material=originalPaperMaterial;renderer.compile(scene,camera);
 
         isInitialized = true;
         renderAt(0);
+        // Precompute rounded curl poses during quiet idle time. Playback only
+        // interpolates arrays instead of repeating hundreds of thousands of trig operations.
+        let pose=0;
+        function buildCurlPose(){
+            buildingCurlCache=true;
+            physicalSheet(pose/48);
+            curlCache.push(new Float32Array(geometry.attributes.position.array));
+            buildingCurlCache=false;pose++;
+            if(pose<49)setTimeout(buildCurlPose,0);else renderAt(lastProgress);
+        }
+        setTimeout(buildCurlPose,0);
 
         window.addEventListener("resize", onResize);
     }
@@ -200,10 +242,13 @@
         const aspect = w / h;
         const fovRad = (camera.fov * Math.PI) / 180.0;
 
-        // Extend to full bleed: 102% of viewport width across all desktop and laptop screens
-        const targetWidthCoverage = 1.02;
+        // Phones: portrait sheet covers 94% of the width. Desktop: the longer
+        // sheet is fitted by HEIGHT (94% of the viewport) so its torn top and
+        // bottom edges stay visible; width lands near 80% and stays centered.
+        const targetWidthCoverage = PORTRAIT ? 0.94 : 1.02;
+        const heightCoverage = 1.0;
         const widthDist = PLANE_W / (2.0 * Math.tan(fovRad * 0.5) * aspect * targetWidthCoverage);
-        const minHeightDist = (PLANE_H / 0.94) / (2.0 * Math.tan(fovRad * 0.5));
+        const minHeightDist = (PLANE_H / heightCoverage) / (2.0 * Math.tan(fovRad * 0.5));
         const camZ = Math.max(widthDist, minHeightDist);
 
         camera.position.set(0, 0, camZ);
@@ -220,6 +265,99 @@
         renderer.setSize(w, h, false);
     }
 
+    const smooth = t => {t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+    // Piecewise rigid flaps rotate around real crease lines. Different release
+    // times and a tiny damped rebound give each fold tension, then a flat rest.
+    function physicalSheet(p) {
+        const a=geometry.attributes.position;
+        if(!buildingCurlCache && curlCache.length===49){
+            const f=Math.max(0,Math.min(48,p*48)),lo=Math.floor(f),hi=Math.min(48,lo+1),u=f-lo;
+            const dst=a.array,A=curlCache[lo],B=curlCache[hi];
+            for(let j=0;j<dst.length;j++)dst[j]=A[j]+(B[j]-A[j])*u;
+        } else {
+        const folds=[
+            {nx:1,ny:0,line:1.70,start:.04,end:.71,angle:1.65},
+            {nx:-1,ny:0,line:1.70,start:.02,end:.65,angle:-1.72},
+            {nx:0,ny:1,line:.65,start:.13,end:.82,angle:-1.45},
+            {nx:0,ny:-1,line:.65,start:.08,end:.76,angle:1.52}
+        ];
+        for(let i=0;i<a.count;i++){
+            const fx=flatPositions[i*3],fy=flatPositions[i*3+1];
+            let x=fx,y=fy,z=0;
+            for(const f of folds){
+                const q=(p-f.start)/(f.end-f.start),release=smooth(q);
+                // Spring goes slightly past flat before settling back on its crease.
+                const rebound=q>1 ? Math.sin((q-1)*12)*Math.exp(-(q-1)*11)*.10 : 0;
+                const angle=f.angle*(1-release)+rebound;
+                const d=x*f.nx+y*f.ny-f.line;
+                if(d>0){
+                    // A rounded, elastic paper curl, integrated along the
+                    // flap instead of rotating a rigid angular polygon.
+                    const bendWidth=1.5;
+                    const steps=8,ds=d/steps;
+                    let nd=0,nz=0;
+                    for(let k=0;k<steps;k++){
+                        const along=(k+.5)*ds;
+                        const theta=angle*smooth(along/bendWidth);
+                        nd+=Math.cos(theta)*ds;
+                        nz+=Math.sin(theta)*ds;
+                    }
+                    x+=f.nx*(nd-d);y+=f.ny*(nd-d);z+=nz;
+                }
+            }
+            // The tightly crushed heart relaxes first; the perimeter remains
+            // hinged and peels outward later, rather than all pixels scaling.
+            const release=smooth((p-.015)/.48);
+            const bx=crumpledPositions[i*3]*.40;
+            const by=crumpledPositions[i*3+1]*.40;
+            const bz=crumpledPositions[i*3+2]*.40;
+            const radius=Math.hypot(fx/5.25,fy/2.41);
+            const local=1;
+            x=bx*(1-local)+x*local;
+            y=by*(1-local)+y*local;
+            z=bz*(1-local)+z*local;
+            const crease=getPaperCrease(fx,fy);
+            const creaseRemain=Math.pow(1-smooth((p-.12)/.85),1.6);
+            z+=crease.cz*.12*creaseRemain;
+            a.setXYZ(i,x,y,z);
+        }
+        }
+        if(buildingCurlCache)return;
+        const shapeBlend=handoffPositions?smooth((p-.012)/.24):1;
+        handoffBlend.value=handoffPositions?smooth((p-.025)/.24):1;
+        if(handoffPositions){
+            const dst=a.array;
+            let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+            for(let j=0;j<dst.length;j+=3){minX=Math.min(minX,dst[j]);maxX=Math.max(maxX,dst[j]);minY=Math.min(minY,dst[j+1]);maxY=Math.max(maxY,dst[j+1]);}
+            const span=Math.max(maxX-minX,maxY-minY);
+            const growth=smooth((p-.012)/.59);
+            const scale=(handoffDiameter+(span-handoffDiameter)*growth)/span;
+            const ox=(maxX+minX)/2,oy=(maxY+minY)/2;
+            for(let j=0;j<dst.length;j+=3){dst[j]=(dst[j]-ox)*scale+ox;dst[j+1]=(dst[j+1]-oy)*scale+oy;dst[j+2]*=scale;}
+
+            const angle=handoffAngle*(1-shapeBlend),co=Math.cos(angle),si=Math.sin(angle);
+            for(let i=0;i<a.count;i++){
+                const j=i*3;
+                const ix=(vertexU[i]-.5)*handoffSize,iy=(vertexV[i]-.5)*handoffSize;
+                const x=ix*(1-shapeBlend)+dst[j]*shapeBlend;
+                const y=iy*(1-shapeBlend)+dst[j+1]*shapeBlend;
+                dst[j]=x*co-y*si+handoffCenter.x*(1-shapeBlend);
+                dst[j+1]=x*si+y*co+handoffCenter.y*(1-shapeBlend);
+                dst[j+2]*=shapeBlend;
+            }
+        }
+        a.needsUpdate=true;
+        geometry.computeVertexNormals();
+        const rest=1-smooth(p/.98);
+        mesh.rotation.set(.10*rest*shapeBlend,-.13*rest*shapeBlend,-.03*rest*shapeBlend);
+        mesh.position.set(.25*rest*shapeBlend,(SHEET_Y+.06*rest)*shapeBlend,0);
+        if(mesh.material.flatShading){mesh.material.flatShading=false;mesh.material.needsUpdate=true;}
+        mesh.scale.set(1,1,1);
+        paperAmbient.intensity=.55+.05*smooth((p-.6)/.4);
+        paperKey.intensity=.65-.30*smooth((p-.65)/.35);
+        renderer.render(scene,camera);
+    }
+
     function renderAt(progress) {
         if (!isInitialized || !mesh) return;
 
@@ -228,6 +366,8 @@
         const posAttr = geometry.attributes.position;
         const count = posAttr.count;
 
+        if(fallEntry){physicalSheet(p);return;}
+
         // If fully open (p >= 0.95), set directly to 2D plane coordinates
         if (p >= 0.95) {
             for (let i = 0; i < count; i++) {
@@ -235,7 +375,7 @@
             }
             posAttr.needsUpdate = true;
             mesh.rotation.set(0, 0, 0);
-            mesh.position.set(0,0,0);
+            mesh.position.set(0, SHEET_Y, 0);
             mesh.scale.set(1,1,1);
             renderer.render(scene, camera);
             return;
@@ -251,7 +391,7 @@
         const globalRemaining = 1.0 - easeP;
 
         // Ball starts near the TOP (+1.35) and smoothly settles into center (0) as it opens
-        const ballY = 1.35 * globalRemaining;
+        const ballY = (fallEntry ? .10 : 1.35) * globalRemaining;
 
         for (let i = 0; i < count; i++) {
             const i3 = i * 3;
@@ -289,17 +429,48 @@
         mesh.rotation.y = -0.16 * globalRemaining;
         mesh.rotation.z = -0.06 * globalRemaining;
 
-        const entryRemain = cornerEntry ? Math.pow(1-p,1.8) : 0;
-        mesh.position.set(-3.25*entryRemain,.80*entryRemain,0);
-        const entryScale = cornerEntry ? .48+.52*Math.min(1,p*2) : 1;
-        mesh.scale.set(entryScale,entryScale,entryScale);
+        // On the project-ball route the folds release from the upper-left.
+        const entryRemain = cornerEntry ? Math.pow(1-p, 1.8) : 0;
+        mesh.position.set(fallEntry ? .25*Math.pow(1-p,1.8) : -3.25*entryRemain, SHEET_Y + .80*entryRemain, 0);
+        const entryScale = cornerEntry ? .48 + .52 * Math.min(1,p*2) : 1;
+        mesh.scale.set(entryScale, entryScale, entryScale);
 
         renderer.render(scene, camera);
     }
 
     // Public API
+    window.preparePaperBallHandoff=function(sprite){
+        const cs=getComputedStyle(sprite),m=new DOMMatrix(cs.transform);
+        const size=sprite.offsetWidth,origin=size/2;
+        const halfH=camera.position.z*Math.tan(camera.fov*Math.PI/360);
+        const halfW=halfH*camera.aspect;
+        handoffPositions=new Float32Array(geometry.attributes.position.array.length);
+        for(let i=0;i<vertexU.length;i++){
+            const lx=vertexU[i]*size-origin,ly=(1-vertexV[i])*size-origin;
+            const sx=m.a*lx+m.c*ly+m.e+origin;
+            const sy=m.b*lx+m.d*ly+m.f+origin;
+            handoffPositions[i*3]=(sx/window.innerWidth*2-1)*halfW;
+            handoffPositions[i*3+1]=(1-sy/window.innerHeight*2)*halfH;
+        }
+        handoffSize=size*Math.hypot(m.a,m.b)/window.innerWidth*2*halfW;
+        handoffDiameter=handoffSize*.90;
+        handoffCenter={x:((m.e+origin)/window.innerWidth*2-1)*halfW,y:(1-(m.f+origin)/window.innerHeight*2)*halfH};
+        handoffAngle=-Math.atan2(m.b,m.a);
+        handoffBlend.value=0;
+    };
+    window.setPaperUnfoldFallEntry = function(value) {
+        const nextFallEntry=!!value;
+        if(nextFallEntry===fallEntry && renderer && mesh && mesh.material===(nextFallEntry?softPaperMaterial:originalPaperMaterial))return;
+        fallEntry=nextFallEntry;
+        if(!fallEntry){handoffPositions=null;handoffBlend.value=1;}
+        if(renderer)renderer.setPixelRatio(fallEntry ? .65 : Math.min(window.devicePixelRatio||1,2));
+        if(mesh)mesh.material=fallEntry?softPaperMaterial:originalPaperMaterial;
+        if(!fallEntry && paperAmbient && paperKey){paperAmbient.intensity=.60;paperKey.intensity=.35;mesh.material.flatShading=true;mesh.material.needsUpdate=true;}
+    };
     window.setPaperUnfoldCornerEntry = function(value) {cornerEntry=!!value;};
-    window.initPaperUnfold = init;
+    window.initPaperUnfold = ()=>{if(!isInitialized)init();};
+    if(document.readyState==='complete')setTimeout(()=>{if(!isInitialized)init();},500);
+    else window.addEventListener('load',()=>setTimeout(()=>{if(!isInitialized)init();},500));
     window.updatePaperUnfold = function (progress) {
         if (!isInitialized) init();
         renderAt(progress);

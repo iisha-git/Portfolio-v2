@@ -85,6 +85,7 @@ function measureStage() {
 // Paper-slide  (3D paper ball unfolding simulation - 1 scroll trigger)
 // ---------------------------------------------------------------
 
+let cinematicSlideLock = false;
 let targetSlide = 0;
 let displaySlide = 0;
 let slideFrame = 0;
@@ -116,7 +117,7 @@ function applySlide(progress) {
 
     slideActive = true;
     paperSlide.style.visibility = "visible";
-    paperSlide.style.opacity    = String(Math.min(progress / 0.04, 1));
+    paperSlide.style.opacity    = String(cinematicSlideLock ? 1 : Math.min(progress / 0.04, 1));
 
     // Update 3D paper mesh unfolding simulation
     if (window.updatePaperUnfold) {
@@ -125,13 +126,19 @@ function applySlide(progress) {
         } catch (e) {}
     }
 
-    // Fade navbar & social rail
-    const chromeOpacity = 1 - Math.min(progress * 4, 1);
-    navbar.style.opacity     = chromeOpacity;
-    socialRail.style.opacity = chromeOpacity;
+    // Chrome fades out while the sheet flies in. The navbar fades back in
+    // once the unfold settles; the rail returns only on desktop (phones
+    // keep the sheet clean - contact placement is being redesigned).
+    const fadeOut = 1 - Math.min(progress * 4, 1);
+    const fadeIn  = clamp01((progress - 0.85) / 0.15);
+    const settled = progress <= 0.85 ? fadeOut : fadeIn;
+    navbar.style.opacity     = settled;
+    hero.classList.toggle("sheet-open", progress > 0.82);
+    socialRail.style.opacity = settled;
 }
 
 function setSlideTarget(progress) {
+    if (cinematicSlideLock) return;
     targetSlide = clamp01(progress);
     displaySlide = targetSlide;
     applySlide(displaySlide);
@@ -869,7 +876,9 @@ let ballStepTimer = null;
 let ballFallTimer = null;
 let rockRollRun = 0;
 let rockRollAnimation = null;
+let rockCameraAnimation = null;
 let restoreCinematicPaper = null;
+let restoreFallScene = null;
 
 // Phones: the stage ball perches on the bottom-right card's frame (bioOasis)
 // and, when tapped, rolls right off the page to open the achievements paper.
@@ -889,10 +898,16 @@ function perchBall() {
 }
 
 function resetPaperBall() {
+    hero.classList.remove("cinematic-unfold","fall-tracking");
+    cinematicSlideLock = false;
+    if(restoreFallScene){restoreFallScene();restoreFallScene=null;}
+    document.querySelectorAll(".fall-depth-extension,.fall-project-echoes,.rock-roll-prepared").forEach(n=>n.remove());
+    if(window.setPaperUnfoldFallEntry)window.setPaperUnfoldFallEntry(false);
     rockRollRun++;
     if (window.setPaperUnfoldCornerEntry) window.setPaperUnfoldCornerEntry(false);
     if (restoreCinematicPaper) {restoreCinematicPaper(); restoreCinematicPaper=null;}
     if (rockRollAnimation) rockRollAnimation.cancel();
+    if (rockCameraAnimation) rockCameraAnimation.cancel();
     document.querySelectorAll(".rock-roll-ball, .rock-roll-scene").forEach(node => node.remove());
     const originalBall = document.getElementById("interactivePaperBallDesk");
     if (originalBall) originalBall.style.visibility = "";
@@ -929,7 +944,12 @@ function setupProjectNavFocus() {
 async function rollPaperAcrossRocks(ball) {
     const run = ++rockRollRun;
     paperBallState = "rolling";
+    ball.classList.remove("perched");
     if (window.initPaperUnfold) window.initPaperUnfold();
+    // Decode the deeper environment before the ball moves, never at the edge.
+    const preparedDepth=new Image();
+    preparedDepth.src="assets/rock-depth-continuation.png";
+    await preparedDepth.decode().catch(()=>{});
     // Open the view so the real supporting steps stay visible during the fall.
     await new Promise(resolve => window.dispatchEvent(new CustomEvent("project-camera-overview", {detail:{onSettled:resolve}})));
     if (run !== rockRollRun) return;
@@ -948,75 +968,204 @@ async function rollPaperAcrossRocks(ball) {
     ball.style.visibility = "hidden";
     const x = f => rock.left + rock.width * f;
     const y = f => rock.top + rock.height * f;
-    // Roll off the rim, then let gravity take over. Never track down the bezel.
-    const frames = [];
-    let t = 0, px = rect.left+r, py = rect.top+r, spin = 0;
-    const put = () => frames.push({t, x:px, y:py, spin});
-    const roll = (nx,ny,dt) => { spin += (nx-px)/r*180/Math.PI; px=nx; py=ny; t+=dt; put(); };
-    const drop = (nx,ny) => {
-        const sx=px, sy=py, st=t, ss=spin;
-        const dt=Math.sqrt(2*Math.max(1,ny-sy)/2100);
-        for(let j=1;j<=12;j++) { const u=j/12; t=st+dt*u;px=sx+(nx-sx)*u;py=sy+(ny-sy)*u*u;spin=ss+150*u;put(); }
+    // Give contact phases their own time. Free fall below stays fast.
+    const frames = [],landmarks=[];
+    let t=0,px=rect.left+r,py=rect.top+r,spin=0;
+    const put=()=>frames.push({t,x:px,y:py,spin});
+    const mark=name=>landmarks.push({name,t,x:px,y:py});
+    const hold=dt=>{t+=dt;put();};
+    const roll=(nx,ny,dt)=>{
+        const sx=px,sy=py,ss=spin,st=t;
+        for(let j=1;j<=30;j++){
+            const u=j/30,q=u*u*(3-2*u);
+            px=sx+(nx-sx)*q;py=sy+(ny-sy)*q;
+            spin=ss+(px-sx)/r*180/Math.PI;t=st+dt*u;put();
+        }
     };
-    const bounce = (dx,h) => {
-        const sx=px,sy=py,st=t,ss=spin,dt=Math.sqrt(8*h/2100);
-        for(let j=1;j<=8;j++) { const u=j/8;t=st+dt*u;px=sx+dx*u;py=sy-4*h*u*(1-u);spin=ss+60*u;put(); }
+    const drop=(nx,ny,dt)=>{
+        const sx=px,sy=py,ss=spin,st=t;
+        for(let j=1;j<=30;j++){
+            const u=j/30;px=sx+(nx-sx)*u;py=sy+(ny-sy)*u*u;
+            spin=ss+(nx-sx)/r*100*u;t=st+dt*u;put();
+        }
     };
-    put();
-    roll(lid.right+r*.48,lid.top+r*.25,.22);
-    drop(x(.815),y(.665)-r*.70);
-    bounce(23,9);
-    roll(x(.895),y(.650)-r*.70,.25);
-    drop(x(.915),y(.795)-r*.70);
-    bounce(25,7);
-    roll(x(.985),y(.780)-r*.70,.24);
-    roll(window.innerWidth-size*.48,y(.80),.18);
-    rockRollAnimation = sprite.animate(frames.map(p => ({offset:p.t/t,transform:"translate("+(p.x-r)+"px,"+(p.y-r)+"px) rotate("+p.spin+"deg)"})), {duration:t*1000,easing:"linear",fill:"forwards"});
+    const bounce=(dx,h,dt)=>{
+        const sx=px,sy=py,ss=spin,st=t;
+        for(let j=1;j<=20;j++){
+            const u=j/20;px=sx+dx*u;py=sy-4*h*u*(1-u);
+            spin=ss+dx/r*180/Math.PI*u;t=st+dt*u;put();
+        }
+    };
+    put();mark("upper-rest");hold(.20);
+    roll(x(.68),y(.29)-r*.83,.65);mark("upper-rim");
+    // Land on the visible front half of the keyboard, never its display.
+    drop(deck.left+deck.width*.64,deck.top+deck.height*.45-r*.83,.62);mark("keyboard-contact");
+    bounce(10,11,.25);mark("keyboard-first-rebound");
+    bounce(4,3,.14);hold(.18);mark("keyboard-settled");
+    roll(deck.right+r*.1,deck.top+deck.height*.47-r*.83,.85);mark("keyboard-rim");
+    // Two supporting rock shelves, with smaller rebounds after each impact.
+    drop(x(.83),y(.65)-r*.83,.36);mark("middle-rock-contact");
+    bounce(10,8,.23);bounce(3,2,.12);hold(.18);mark("middle-rock-settled");
+    roll(x(.90),y(.64)-r*.83,.72);mark("middle-rock-rim");
+    drop(x(.925),y(.80)-r*.83,.45);mark("lower-rock-contact");
+    bounce(8,6,.22);bounce(3,1.5,.11);hold(.18);mark("lower-rock-settled");
+    roll(x(.985),y(.77)-r*.83,1.05);mark("final-rim");
+    window.rockRouteReview={frames,landmarks,duration:t};
+    // Preinstall the decoded environment while the original rocks still cover it.
+    const depthScene=document.querySelector(".projects-stage .cam3d");
+    const extension=preparedDepth;
+    extension.alt="";extension.className="fall-depth-extension";
+    Object.assign(extension.style,{position:"absolute",left:"-35%",top:"66%",width:"200%",height:"420%",maxWidth:"none",objectFit:"fill",pointerEvents:"none",maskImage:"linear-gradient(transparent,#000 12%,#000)",transform:"translateZ(0)"});
+    depthScene.prepend(extension);
+    const echoes=document.createElement("div");echoes.className="fall-project-echoes";
+    Object.assign(echoes.style,{position:"absolute",left:"-35%",top:"66%",width:"200%",height:"420%",pointerEvents:"none"});
+    // Each bottom anchor is on a visible top surface in the deeper rock artwork.
+    [{key:"farm",x:68.5,y:30,w:15,a:7,o:.22},
+     {key:"bio",x:50,y:39,w:14,a:-8,o:.16}].forEach(p=>{
+        const echo=new Image();echo.className="fall-project-echo";
+        echo.src="assets/fall-laptop-"+p.key+".png";
+        Object.assign(echo.style,{position:"absolute",left:p.x+"%",top:p.y+"%",width:p.w+"%",height:"auto",transform:`translate(-50%,-100%) rotate(${p.a}deg)`,transformOrigin:"50% 100%",opacity:String(p.o),filter:"saturate(.4)",pointerEvents:"none"});
+        echoes.appendChild(echo);
+    });
+    extension.after(echoes);
+    await Promise.all([...echoes.querySelectorAll("img")].map(im=>im.decode().catch(()=>{})));
+    // Build the scene copy during preparation, not at the moving handoff.
+    const preparedVeil=depthScene.closest(".projects-view").cloneNode(true);preparedVeil.classList.add("rock-roll-prepared");
+    preparedVeil.querySelectorAll("[id]").forEach(n=>n.removeAttribute("id"));
+    preparedVeil.querySelectorAll(".projects-sidebar,.projects-head,.camera-connectors").forEach(n=>n.style.setProperty("opacity","0","important"));
+    Object.assign(preparedVeil.style,{position:"fixed",left:"0",top:"0",width:innerWidth+"px",height:innerHeight+"px",visibility:"hidden",pointerEvents:"none",zIndex:"998"});
+    hero.appendChild(preparedVeil);
+    if(window.setPaperUnfoldFallEntry)window.setPaperUnfoldFallEntry(true);
+    // Prepaint the opening layers before the route, not at the moving handoff.
+    const paper=document.querySelector(".paper-slide");
+    const content=document.querySelector(".sheet-achieve");
+    const oldStyle=paper.style.cssText,oldContentStyle=content?content.style.cssText:"";
+    restoreCinematicPaper=()=>{paper.style.cssText=oldStyle;if(content)content.style.cssText=oldContentStyle;};
+    hero.classList.add("cinematic-unfold");
+    Object.assign(paper.style,{visibility:"visible",opacity:".001",zIndex:"999",willChange:"opacity"});
+    if(content){content.style.zIndex="1001";content.style.willChange="opacity";}
+    // Warm texture upload and the first mesh draw while the sheet is hidden.
+    if(window.updatePaperUnfold)window.updatePaperUnfold(.012);
+    hero.classList.add("fall-tracking");
+    // Camera scale builds without a fresh ease-in at the last edge.
+    const approachScene=document.querySelector(".projects-stage .cam3d");
+    const approachRect=approachScene.getBoundingClientRect();
+    const approachDuration=Math.min(950,t*1000*.42);
+    const approachDelay=t*1000-approachDuration;
+    const approachScale=1.22;
+    rockCameraAnimation=approachScene.animate([
+        {transform:"translate(0,0) scale(1)",transformOrigin:"0 0"},
+        {transform:`translate(${(1-approachScale)*(px-approachRect.left)}px,${(1-approachScale)*(py-approachRect.top)}px) scale(${approachScale})`,transformOrigin:"0 0"}
+    ],{delay:approachDelay,duration:approachDuration,easing:"linear",fill:"forwards"});
+    rockRollAnimation = sprite.animate(frames.map(p => ({offset:p.t/t,transform:(()=>{const q=clamp01((p.t*1000-approachDelay)/approachDuration);const e=q;const z=1+.22*e;const ax=px+(p.x-px)*z,ay=py+(p.y-py)*z;return `translate(${ax-r}px,${ay-r}px) rotate(${p.spin}deg) scale(${z})`;})()})), {duration:t*1000,easing:"linear",fill:"forwards"});
     try { await rockRollAnimation.finished; } catch (_) { return; }
     if (run !== rockRollRun) return;
-    paperBallState = "unfolding";
-    // Keep this very same ball on screen as the camera leaves the rocks.
-    const veil=document.createElement("div");
-    veil.className="rock-roll-scene";
-    Object.assign(veil.style,{position:"fixed",inset:"0",background:"#0b0b0b",zIndex:"998",opacity:"0",pointerEvents:"none"});
-    document.body.appendChild(veil);
-    veil.animate([{opacity:0},{opacity:1}],{duration:480,fill:"forwards"});
-    const cx=window.innerWidth*.19, cy=window.innerHeight*.26;
+    paperBallState = "falling";
+    hero.classList.add("fall-tracking");
+    // Only the FINAL edge gets a following camera. Earlier hops are unchanged.
+    const cx=window.innerWidth*.53, cy=window.innerHeight*.49;
+    const scene=document.querySelector(".projects-stage .cam3d");
+    const sceneRect={left:approachRect.left,top:approachRect.top};
+    const originalSceneStyle=scene.style.cssText;
+    restoreFallScene=()=>{scene.style.cssText=originalSceneStyle;extension.remove();echoes.remove();};
+    const zoom=approachScale;
+    const startX=px-sceneRect.left,startY=py-sceneRect.top;
+    const entryDuration=650,fallSpeed=1250;
+    const entryDrop=fallSpeed*(entryDuration/1000)*.5;
+    const tx=cx-sceneRect.left-startX*zoom, ty=cy-sceneRect.top-(startY+entryDrop)*zoom;
+    rockCameraAnimation.cancel();
+    rockCameraAnimation=scene.animate([
+        {transform:`translate(${(1-approachScale)*startX}px,${(1-approachScale)*startY}px) scale(${approachScale})`,transformOrigin:"0 0"},
+        {transform:`translate(${tx}px,${ty}px) scale(${zoom})`,transformOrigin:"0 0"}
+    ],{duration:entryDuration,easing:"cubic-bezier(.42,0,1,1)",fill:"forwards"});
     rockRollAnimation.cancel();
     rockRollAnimation=sprite.animate([
-        {offset:0,transform:"translate("+(px-r)+"px,"+(py-r)+"px) rotate("+spin+"deg) scale(1)"},
-        {offset:.40,transform:"translate("+(window.innerWidth*.07-r)+"px,"+(-size*1.2)+"px) rotate("+(spin+150)+"deg) scale(.85)"},
-        {offset:.66,transform:"translate("+(window.innerWidth*.11-r)+"px,"+(window.innerHeight*.02-r)+"px) rotate("+(spin+200)+"deg) scale(1)"},
-        {offset:1,transform:"translate("+(cx-r)+"px,"+(cy-r)+"px) rotate("+(spin+280)+"deg) scale(1.6)"}
-    ],{duration:880,easing:"linear",fill:"forwards"});
-    try {await rockRollAnimation.finished;} catch(_){return;}
+        {transform:`translate(${px-r}px,${py-r}px) rotate(${spin}deg) scale(${approachScale})`},
+        {transform:`translate(${cx-r}px,${cy-r}px) rotate(${spin+45}deg) scale(${zoom})`}
+    ],{duration:entryDuration,easing:"cubic-bezier(.42,0,1,1)",fill:"forwards"});
+    try{await rockRollAnimation.finished;}catch(_){return;}
     if(run!==rockRollRun)return;
-    // Hand the same paper object into the site's real 3D uncrumpling mesh.
-    const paper=document.querySelector(".paper-slide");
-    const home=paper.parentNode, next=paper.nextSibling, oldStyle=paper.style.cssText;
-    restoreCinematicPaper=()=>{home.insertBefore(paper,next);paper.style.cssText=oldStyle;};
-    document.body.appendChild(paper);
-    Object.assign(paper.style,{position:"fixed",inset:"0",zIndex:"999",visibility:"visible",opacity:"1"});
-    if (window.setPaperUnfoldCornerEntry) window.setPaperUnfoldCornerEntry(true);
+    // Accelerating world-space descent. Camera travels down with the ball,
+    // so ledges and the unique deeper environment travel UP behind it.
+    const dropDistance=window.innerHeight*1.65;
+    const cameraFrames=[],ballFrames=[];
+    for(let j=0;j<=60;j++){
+        const u=j/60,fall=.6*u+.4*u*u;
+        // A small camera approach across the fall, flat at both ends.
+        const fallZoom=zoom+.12*(u*u*(3-2*u));
+        const wx=startX-window.innerWidth*.10*u;
+        const wy=startY+entryDrop+dropDistance*fall;
+        const sx=cx+Math.sin(u*Math.PI)*16;
+        const sy=cy+window.innerHeight*.045*Math.sin(u*Math.PI);
+        cameraFrames.push({offset:u,transform:`translate(${sx-sceneRect.left-wx*fallZoom}px,${sy-sceneRect.top-wy*fallZoom}px) scale(${fallZoom})`,transformOrigin:"0 0"});
+        ballFrames.push({offset:u,transform:`translate(${sx-r}px,${sy-r}px) rotate(${spin+45+510*u}deg) scale(${fallZoom})`});
+    }
+    rockCameraAnimation.cancel();rockRollAnimation.cancel();
+    rockCameraAnimation=scene.animate(cameraFrames,{duration:dropDistance/fallSpeed*1000,easing:"linear",fill:"forwards"});
+    rockRollAnimation=sprite.animate(ballFrames,{duration:dropDistance/fallSpeed*1000,easing:"linear",fill:"forwards"});
+    try{await rockRollAnimation.finished;}catch(_){return;}
+    if(run!==rockRollRun)return;
+    paperBallState="unfolding";
+    // Keep EVERY visible scene layer at the identical crop across the scroll.
+    // Clone the full view, not just the deeper image. Its computed camera
+    // transform is captured before cancelling the original animation.
+    const view=scene.closest(".projects-view");
+    const vr=view.getBoundingClientRect();
+    const veil=preparedVeil;veil.classList.add("rock-roll-scene");
+    veil.querySelectorAll("[id]").forEach(n=>n.removeAttribute("id"));
+    veil.querySelectorAll(".projects-sidebar,.projects-head,.camera-connectors").forEach(n=>n.style.setProperty("opacity","0","important"));
+    const frozenCamera=veil.querySelector(".cam3d");
+    const matrix=getComputedStyle(scene).transform;
+    Object.assign(veil.style,{position:"fixed",left:vr.left+"px",top:vr.top+"px",right:"auto",bottom:"auto",width:vr.width+"px",height:vr.height+"px",transform:"none",opacity:"1",visibility:"hidden",zIndex:"998",pointerEvents:"none",overflow:"visible"});
+    frozenCamera.style.transform=matrix;
+    hero.appendChild(veil);
+    const originalVisibility=view.style.visibility;
+    const restoreSceneBefore=restoreFallScene;
+    restoreFallScene=()=>{restoreSceneBefore();view.style.visibility=originalVisibility;};
+    const descentTravel=720*1.7*2.650/3;
+    rockCameraAnimation.cancel();
+    rockCameraAnimation=scene.animate([{transform:matrix},{transform:`translateY(${-descentTravel}px) ${matrix}`}],{duration:2650,easing:"cubic-bezier(.333333,.999999,.666667,1)",fill:"forwards"});
+    // Keep the original hidden until the complete overlay is no longer needed.
+    // Keep one canvas in its final coordinate system for the whole unfold.
+    // Scroll under the opaque scene veil before opening, never after it.
+    cinematicSlideLock=true;
+    // Keep page scroll unchanged through the moving handoff.
+    if(run!==rockRollRun)return;
+    if(window.setPaperUnfoldCornerEntry)window.setPaperUnfoldCornerEntry(false);
+    if(window.setPaperUnfoldFallEntry)window.setPaperUnfoldFallEntry(true);
+    if(window.preparePaperBallHandoff)window.preparePaperBallHandoff(sprite);
     applySlide(.012);
-    sprite.animate([{opacity:1},{opacity:0}],{duration:180,fill:"forwards"});
+    // Same bitmap, size, angle and position on the mesh's first frame.
+    // Remove the old sprite only after the replacement has rendered.
+    sprite.style.visibility="hidden";
     await new Promise(resolve=>{
         const start=performance.now();
         function frame(now){
             if(run!==rockRollRun){resolve();return;}
-            const u=Math.min(1,(now-start)/1350);
-            applySlide(.012+.988*(u*u*(3-2*u)));
+            const u=Math.min(1,(now-start)/2650);
+            const progress=.012+.948*(u*u*(3-2*u));
+            applySlide(progress);
+            hero.style.setProperty("--cinematic-ink",String(clamp01((progress-.74)/.18)));
             if(u<1)requestAnimationFrame(frame);else resolve();
         }
         requestAnimationFrame(frame);
     });
     if(run!==rockRollRun)return;
+    // Set destination scroll only once the now-opaque sheet covers the page.
+    frozenCamera.style.transform=getComputedStyle(scene).transform;
+    veil.style.visibility="visible";view.style.visibility="hidden";
     window.scrollTo({top:ZOOM.slideStart+ZOOM.slideSpan*.96,behavior:"instant"});
-    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    restoreCinematicPaper();restoreCinematicPaper=null;applySlide(.96);
-    const reveal=veil.animate([{opacity:1},{opacity:0}],{duration:300,fill:"forwards"});
-    await reveal.finished;
-    sprite.remove();veil.remove();
+    await new Promise(resolve=>requestAnimationFrame(resolve));
+    // The displayed paper is already the destination. No swap or black reveal.
+    sprite.remove();
+    // The same settled environment stays behind the page until reset.
+    restoreFallScene();restoreFallScene=null;
+    hero.classList.remove("fall-tracking");
+    // Keep the opened paper above the outgoing projects fade. Restore only on reset.
+    veil.style.zIndex="14";
+    targetSlide=displaySlide=.96;
+    cinematicSlideLock=false;
+    applySlide(.96);
 
 }
 
@@ -1264,6 +1413,7 @@ function setupProjectsCamera() {
     });
     stage.appendChild(connectors);
     var target = 0, prog = 0, raf = null, overviewReady = null;
+    var lastShowcaseWheel=0;
 
     function pathAt(t, keys) {
         if (t <= keys[0][0]) return keys[0].slice(1);
@@ -1378,15 +1528,26 @@ function setupProjectsCamera() {
         if (window.innerWidth <= 768) return;
         if (!document.querySelector(".projects-view.projects-active")) return;
         if (Math.abs(e.deltaY) < 3) return;
-        if (e.deltaY > 0 && target < 1) { e.preventDefault(); setTarget(target + e.deltaY / 3600); }
-        else if (e.deltaY < 0 && target > 0) { e.preventDefault(); setTarget(target + e.deltaY / 3600); }
+        if(paperBallState!=="perched"){e.preventDefault();return;}
+        const now=performance.now(),freshGesture=now-lastShowcaseWheel>180;
+        lastShowcaseWheel=now;
+        if(e.deltaY>0 && target>=.849 && prog>=.84 && freshGesture){
+            e.preventDefault();rollPaperAcrossRocks(document.getElementById("interactivePaperBallDesk"));return;
+        }
+        if (e.deltaY > 0 && target < .85) { e.preventDefault(); setTarget(Math.min(.85,target + e.deltaY / 3600)); }
+        else if (e.deltaY < 0 && target > 0) { e.preventDefault(); setTarget(Math.min(.85,target + e.deltaY / 3600)); }
         /* at the ends the page scrolls on naturally */
     }, { passive: false });
 
     window.addEventListener("keydown", function (e) {
         if (window.innerWidth <= 768) return;
         if (!document.querySelector(".projects-view.projects-active")) return;
-        if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setTarget(target + 0.14); }
+        if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "PageDown") {
+            e.preventDefault();
+            if(paperBallState!=="perched")return;
+            if(target>=.85&&prog>=.845&&!e.repeat)rollPaperAcrossRocks(document.getElementById("interactivePaperBallDesk"));
+            else setTarget(Math.min(.85,target+.14));
+        }
         else if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); setTarget(target - 0.14); }
     });
     navItems.forEach(function (item, i) {
@@ -1397,3 +1558,10 @@ function setupProjectsCamera() {
     apply(); /* paint the overview state on load */
 }
 setupProjectsCamera();
+
+// Rest on the open end of the penultimate supporting rock, not on a laptop.
+if(window.innerWidth>768){
+    const restBall=document.getElementById("interactivePaperBallDesk");
+    const support=document.querySelector(".z-stack");
+    if(restBall&&support){support.appendChild(restBall);restBall.classList.add("rock-rest-ball");restBall.removeAttribute("title");restBall.setAttribute("aria-label","Paper ball resting on the rock. Scroll past the last project to continue.");}
+}
