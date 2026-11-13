@@ -4813,3 +4813,24 @@ html {
 
 /* Keep the printed artwork on the same mesh after the creases settle. */
 .hero.cinematic-unfold .sheet-achieve {opacity:0!important;visibility:hidden!important;}
+
+/* Keep About's milestones readable on phones, not display:none. */
+@media (max-width:768px) {
+    .hero.about-view .plane-path { left:4%; top:12%; width:28%; height:80%; transform:none; }
+    .hero.about-view .journey-stamp { display:block; left:34% !important; width:61%; height:auto; }
+    .hero.about-view .stamp-1 { top:15% !important; }
+    .hero.about-view .stamp-2 { top:30% !important; }
+    .hero.about-view .stamp-3 { top:45% !important; }
+    .hero.about-view .stamp-4 { top:60% !important; }
+    .hero.about-view .stamp-5 { top:75% !important; }
+    .hero.about-view .stamp-content { left:0; right:auto; top:0; width:100%; max-width:none; transform:none !important; align-items:flex-start; text-align:left; }
+    .hero.about-view .stamp-content h4 { font-size:12px; letter-spacing:.65px; white-space:normal; transform:none; line-height:1.35; }
+    .hero.about-view .stamp-content p { font-size:11px; line-height:1.5; letter-spacing:.4px; margin-top:6px; max-height:100px; }
+    .hero.about-view .stamp-dot { left:-20px; top:5px; width:5px; height:5px; }
+    .hero.about-view .stamp-leader { display:none; }
+}
+
+.phone-journey-plane { position:absolute; width:30px; height:30px; object-fit:contain; pointer-events:none; z-index:6; }
+@media(max-width:768px) {
+    .hero.about-view .plane-path .dashed-path { vector-effect:non-scaling-stroke; stroke-width:1.2; stroke-dasharray:4 5 !important; }
+}

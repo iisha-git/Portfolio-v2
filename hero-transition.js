@@ -633,6 +633,7 @@ function evalFlightSpline(t) {
 
 // About clears completely before the intact Projects staircase arrives.
 // Animate independent parent layers so camera/card transforms stay untouched.
+let phoneJourneyPlane = null;
 let projectsEntranceAnimations = [];
 let projectsEntranceRun = 0;
 let projectsEntranceBusy = false;
@@ -664,9 +665,24 @@ function startProjectsEntrance() {
         {offset:.88, translate:"0 -3px", scale:"1", easing:"ease-in-out"},
         {offset:1, translate:"0 0", scale:"1"}
     ], 2300, 80, "linear");
-    projectsView.querySelectorAll(".projects-sidebar,.projects-head,.z-krishi,.z-nyay,.z-bio,.camera-connectors,.rock-rest-ball").forEach(node => {
+    projectsView.querySelectorAll(".projects-sidebar,.projects-head,.camera-connectors").forEach(node => {
         animate(node, [{opacity:0,translate:"0 12px"}, {opacity:1,translate:"0 0"}], 720, 2180);
     });
+    // The three Projects devices drop from above after their rock supports
+    // have settled. Independent translate preserves each laptop's pose.
+    ["krishi","nyay","bio"].forEach((key,index) => {
+        const delay = 2390 + index * 170;
+        animate(projectsView.querySelector(".laptop-"+key), [
+            {offset:0,translate:"0 -120vh",easing:"cubic-bezier(.55,.02,.90,.45)"},
+            {offset:.78,translate:"0 4px",easing:"ease-out"},
+            {offset:.91,translate:"0 -2px",easing:"ease-in"},
+            {offset:1,translate:"0 0"}
+        ], 900, delay, "linear");
+        projectsView.querySelectorAll(".z-"+key+" .project-tape,.z-"+key+" .looped-arrow").forEach(node => {
+            animate(node,[{opacity:0},{opacity:1}],420,delay+720);
+        });
+    });
+    animate(projectsView.querySelector(".rock-rest-ball"),[{opacity:0},{opacity:1}],350,3480);
     animate(projectsView.querySelector(".depth-environment"), [{opacity:0},{opacity:1}], 650, 120);
     [
         [".depth-far", "38vh", 2550],
@@ -689,6 +705,7 @@ function updateScrollStages(scroll, suppressEntrance = false) {
         return;
     }
     const stage = ZOOM.height || hero.clientHeight || 1;
+    if (phoneJourneyPlane) phoneJourneyPlane.style.display = "none";
 
     // Hard guard whenever scrolled past home
     if (scroll > stage * 0.92) {
@@ -732,86 +749,63 @@ function updateScrollStages(scroll, suppressEntrance = false) {
         }
     }
 
-    // -------------------------------------------------------------
-    // Calibrated Flight & Leaving Timeline:
-    // 1. Takeoff & Flight (0.80vh to 1.45vh): Plane flies from dock to loop & milestones
-    // 2. Journey Hold (1.45vh to 2.35vh): Generous, comfortable reading window (~900px scroll)
-    // 3. Airplane Climb & Exit (2.35vh to 3.45vh): Plane soars off screen smoothly along curved arc
-    // 4. Ground Route Dissolving (2.40vh to 3.45vh): Route dashes and stamps dissolve unhurriedly
-    // 5. Flight Trail Leaving (2.75vh to 3.55vh): Streamer trail slowly leaves the screen behind plane
-    // -------------------------------------------------------------
-    const planeStart      = stage * 0.80;
-    const planeMid        = stage * 1.45;
-    const exitStart       = stage * 2.35;
-    const exitEnd         = stage * 3.45;
-    const pathStart       = stage * 2.40;
-    const pathEnd         = stage * 3.45;
-    const trailExitStart  = stage * 2.75;
-    const trailExitEnd    = stage * 3.55;
-
-    // --- Phase 1 & 2: Airplane flight along smooth curved arc ---
-    let planeProgress = 0;
-    if (scroll <= planeStart) {
-        planeProgress = 0;
-    } else if (scroll <= planeMid) {
-        // Phase 1: covers first half of the path (0 -> 0.50), visiting milestones
-        planeProgress = clamp01((scroll - planeStart) / (planeMid - planeStart)) * 0.50;
-    } else if (scroll <= exitStart) {
-        // Hold at milestone apex
-        planeProgress = 0.50;
-    } else {
-        // Phase 2: finishes second half of the path (0.50 -> 1.00) and visibly soars off screen
-        const p2 = clamp01((scroll - exitStart) / (exitEnd - exitStart));
-        planeProgress = 0.50 + 0.50 * p2;
+    // The plane belongs only at the top of the trace, not its clearing edge.
+    // The route clears bottom-up underneath it; both finish together.
+    const planeStart = stage * .80;
+    const pathStart = stage * 2.40;
+    const pathEnd = stage * 3.45;
+    if (dashedPath && dashedPath.getAttribute("d") !== BASE_ROUTE_D) {
+        dashedPath.setAttribute("d", BASE_ROUTE_D);
     }
-
-    if (planeProgress > 0.0001) {
-        const spline = evalFlightSpline(planeProgress);
-
-        // Ground route dashes stay 100% STATIONARY (never crawl or shift)
-        if (dashedPath && dashedPath.getAttribute("d") !== BASE_ROUTE_D) {
-            dashedPath.setAttribute("d", BASE_ROUTE_D);
-        }
-
-        // Flight trail extends to plane's tail
-        if (flightTrailPath) {
-            flightTrailPath.setAttribute("d", spline.dFlight);
-            flightTrailPath.style.display = "block";
-            flightTrailPath.style.strokeDashoffset = "0";
-            flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
-        }
-
-        // Airplane tracks the head of the flight path, with tail locked to Pt
-        if (planeNode) {
-            const img = planeNode.querySelector("image");
-            if (img) img.style.animationPlayState = "paused";
-
-            planeNode.setAttribute(
-                "transform",
-                `translate(${spline.planePt.x.toFixed(1)}, ${spline.planePt.y.toFixed(1)}) rotate(${spline.bank.toFixed(1)}) translate(80, 1)`
-            );
-            planeNode.style.opacity = "1";
-        }
-    } else {
-        // Resting on Home: plane docked at tail, flight trail hidden, float animation active
-        if (dashedPath && dashedPath.getAttribute("d") !== BASE_ROUTE_D) {
-            dashedPath.setAttribute("d", BASE_ROUTE_D);
-        }
-        if (flightTrailPath) {
-            flightTrailPath.setAttribute("d", "");
-            flightTrailPath.style.display = "none";
-            flightTrailPath.style.strokeDashoffset = "0";
-            flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
-        }
-        if (routeMaskPath) {
-            routeMaskPath.style.strokeDasharray = "";
-            routeMaskPath.style.strokeDashoffset = "";
-        }
-        if (planeNode) {
-            const img = planeNode.querySelector("image");
+    const routeLength = routeMaskPath.getTotalLength();
+    const clearProgress = clamp01((scroll - pathStart) / (pathEnd - pathStart));
+    // Latest direction: the plane leads the departure from the upper end.
+    // Its dotted tail follows; the ground route clears from the bottom.
+    const departure = clearProgress;
+    if (flightTrailPath) {
+        flightTrailPath.setAttribute("d", "");
+        flightTrailPath.style.display = "none";
+    }
+    if (planeNode) {
+        const img = planeNode.querySelector("image");
+        if (scroll <= planeStart) {
             if (img) img.style.animationPlayState = "running";
             planeNode.removeAttribute("transform");
             planeNode.style.opacity = "1";
+        } else {
+            if (img) img.style.animationPlayState = "paused";
+            // Reuse the live site's flight curve AND bank, without a new
+            // screen-space heading or an invented straight-up destination.
+            const spline = evalFlightSpline(departure);
+            const point = spline.planePt;
+            const previous = evalFlightPoint(Math.max(0,departure-.006));
+            const next = evalFlightPoint(Math.min(1,departure+.006));
+            if (flightTrailPath && departure > .0001 && departure < 1) {
+                flightTrailPath.setAttribute("d",spline.dFlight);
+                flightTrailPath.style.display = "block";
+                flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
+                flightTrailPath.style.opacity = String(1-clamp01((departure-.85)/.15));
+            }
+            planeNode.setAttribute("transform",`translate(${point.x.toFixed(1)}, ${point.y.toFixed(1)}) rotate(${spline.bank.toFixed(1)}) translate(80, 1)`);
+            planeNode.style.opacity = String(1-clamp01((departure-.85)/.15));
+            if (window.innerWidth <= 768 && clearProgress < 1) {
+                if (!phoneJourneyPlane) {
+                    phoneJourneyPlane = new Image();
+                    phoneJourneyPlane.src = "assets/paper-plane.svg";
+                    phoneJourneyPlane.className = "phone-journey-plane";
+                    phoneJourneyPlane.alt = "";
+                    phoneJourneyPlane.setAttribute("aria-hidden","true");
+                    hero.appendChild(phoneJourneyPlane);
+                }
+                const matrix = planePath.getScreenCTM();
+                const screenPoint = new DOMPoint(point.x,point.y).matrixTransform(matrix);
+                const screenPrevious = new DOMPoint(previous.x,previous.y).matrixTransform(matrix);
+                const screenNext = new DOMPoint(next.x,next.y).matrixTransform(matrix);
+                const rect = hero.getBoundingClientRect();
+                const angle = Math.atan2(screenNext.y-screenPrevious.y,screenNext.x-screenPrevious.x)*180/Math.PI;
+                Object.assign(phoneJourneyPlane.style,{display:"block",opacity:String(1-clamp01((departure-.85)/.15)),left:(screenPoint.x-rect.left)+"px",top:(screenPoint.y-rect.top)+"px",transform:`translate(-50%,-50%) rotate(${angle+150.71}deg)`});
+                planeNode.style.opacity = "0";
+            }
         }
     }
 
@@ -822,7 +816,7 @@ function updateScrollStages(scroll, suppressEntrance = false) {
         const pathRemaining = 1.0 - groundProgress;
 
         if (routeMaskPath) {
-            const curLen = 2272;
+            const curLen = routeLength;
             const visibleLen = Math.max(0, pathRemaining * curLen);
             routeMaskPath.style.strokeDasharray = `${visibleLen.toFixed(1)} ${curLen * 2}`;
             routeMaskPath.style.strokeDashoffset = "0";
@@ -840,20 +834,10 @@ function updateScrollStages(scroll, suppressEntrance = false) {
             });
         }
 
-        // Part B: Flight trail follows the plane out of the page slowly (trailExitStart to trailExitEnd)
-        const flightProgress = clamp01((scroll - trailExitStart) / (trailExitEnd - trailExitStart));
-        if (flightTrailPath) {
-            if (flightProgress > 0.001) {
-                const fLen = 1350;
-                flightTrailPath.style.strokeDasharray = `${fLen} ${fLen * 2}`;
-                flightTrailPath.style.strokeDashoffset = `${(-flightProgress * fLen).toFixed(1)}`;
-            } else {
-                flightTrailPath.style.strokeDasharray = "14 11 11 10 16 11";
-                flightTrailPath.style.strokeDashoffset = "0";
-            }
-        }
     } else {
         // Path is 100% visible before Phase 2: completely reset mask, trail, and stamps
+        // Preserve the live route: visible throughout the reading window,
+        // then cleared from its bottom endpoint upward in Phase 2.
         if (routeMaskPath) {
             routeMaskPath.style.strokeDasharray = "";
             routeMaskPath.style.strokeDashoffset = "";
@@ -865,9 +849,11 @@ function updateScrollStages(scroll, suppressEntrance = false) {
         if (stampMilestones && stampMilestones.length > 0) {
             stampMilestones.forEach(s => {
                 if (s.el) {
-                    s.el.style.opacity = "";
-                    s.el.style.transform = "";
-                    s.el.style.pointerEvents = "";
+                    const index = stampMilestones.indexOf(s);
+                    const reveal = scroll < planeStart ? 1 : clamp01((scroll / stage - (.88 + index * .14)) / .16);
+                    s.el.style.opacity = String(.95 * reveal);
+                    s.el.style.transform = `scale(${(.94 + .06 * reveal).toFixed(3)})`;
+                    s.el.style.pointerEvents = reveal > .95 ? "auto" : "none";
                 }
             });
         }
@@ -1425,17 +1411,53 @@ function setupPaperBallInteractions() {
 // Native High-Performance 60fps/120fps RAF Scroll Handler
 // (Pure native browser physics, zero scrolljacking, zero lag)
 // ---------------------------------------------------------------
-let scrollTicking = false;
-
-window.addEventListener("scroll", () => {
-    if (!scrollTicking) {
-        scrollTicking = true;
-        requestAnimationFrame(() => {
-            updateScrollStages(window.scrollY);
-            scrollTicking = false;
-        });
+// Pace only the forward About presentation, not the native scroll position.
+// Fast wheel/touch/keyboard jumps queue an exit rather than erase the chapter.
+let aboutVisualScroll = window.scrollY;
+let aboutTargetScroll = window.scrollY;
+let aboutPaceFrame = 0;
+let aboutPaceLastTime = 0;
+let aboutReadingUntil = 0;
+let aboutReadingPassed = false;
+function paceAboutScroll(now) {
+    const stage = ZOOM.height || hero.clientHeight || 1;
+    const dt = Math.min(.05, Math.max(0, (now - aboutPaceLastTime) / 1000));
+    aboutPaceLastTime = now;
+    const entry = stage * .80, read = stage * 1.60;
+    if (reduceMotion || aboutTargetScroll < aboutVisualScroll - 2 || aboutVisualScroll >= ZOOM.projectsStart || aboutTargetScroll < entry) {
+        aboutVisualScroll = aboutTargetScroll;
+        if (aboutTargetScroll < entry) {aboutReadingPassed = false; aboutReadingUntil = 0;}
+    } else {
+        if (aboutVisualScroll < entry) aboutVisualScroll = entry;
+        let cap = aboutTargetScroll;
+        if (!aboutReadingPassed) {
+            cap = Math.min(cap, read);
+            if (aboutVisualScroll >= read - 1) {
+                if (!aboutReadingUntil) aboutReadingUntil = now + 2800;
+                if (now >= aboutReadingUntil) aboutReadingPassed = true;
+            }
+        }
+        if (aboutReadingPassed) cap = aboutTargetScroll;
+        const speed = aboutVisualScroll < read ? .36 : .30;
+        aboutVisualScroll = Math.min(cap, aboutVisualScroll + stage * speed * dt);
     }
-}, { passive: true });
+    updateScrollStages(aboutVisualScroll);
+    if (Math.abs(aboutVisualScroll - aboutTargetScroll) > 1) {
+        aboutPaceFrame = requestAnimationFrame(paceAboutScroll);
+    } else {
+        aboutPaceFrame = 0;
+    }
+}
+window.addEventListener("scroll", () => {
+    const next = window.scrollY;
+    // A deliberate backward gesture cancels a queued forward skip at once.
+    if (next < aboutTargetScroll - 2) aboutVisualScroll = next;
+    aboutTargetScroll = next;
+    if (!aboutPaceFrame) {
+        aboutPaceLastTime = performance.now();
+        aboutPaceFrame = requestAnimationFrame(paceAboutScroll);
+    }
+}, {passive:true});
 
 // ---------------------------------------------------------------
 // Init
