@@ -1411,51 +1411,17 @@ function setupPaperBallInteractions() {
 // Native High-Performance 60fps/120fps RAF Scroll Handler
 // (Pure native browser physics, zero scrolljacking, zero lag)
 // ---------------------------------------------------------------
-// Pace only the forward About presentation, not the native scroll position.
-// Fast wheel/touch/keyboard jumps queue an exit rather than erase the chapter.
+// About follows native scroll position directly. No timed reading stops,
+// queued chapter playback or catch-up speed cap after the gesture ends.
 let aboutVisualScroll = window.scrollY;
-let aboutTargetScroll = window.scrollY;
-let aboutPaceFrame = 0;
-let aboutPaceLastTime = 0;
-let aboutReadingUntil = 0;
-let aboutReadingPassed = false;
-function paceAboutScroll(now) {
-    const stage = ZOOM.height || hero.clientHeight || 1;
-    const dt = Math.min(.05, Math.max(0, (now - aboutPaceLastTime) / 1000));
-    aboutPaceLastTime = now;
-    const entry = stage * .80, read = stage * 1.60;
-    if (reduceMotion || aboutTargetScroll < aboutVisualScroll - 2 || aboutVisualScroll >= ZOOM.projectsStart || aboutTargetScroll < entry) {
-        aboutVisualScroll = aboutTargetScroll;
-        if (aboutTargetScroll < entry) {aboutReadingPassed = false; aboutReadingUntil = 0;}
-    } else {
-        if (aboutVisualScroll < entry) aboutVisualScroll = entry;
-        let cap = aboutTargetScroll;
-        if (!aboutReadingPassed) {
-            cap = Math.min(cap, read);
-            if (aboutVisualScroll >= read - 1) {
-                if (!aboutReadingUntil) aboutReadingUntil = now + 2800;
-                if (now >= aboutReadingUntil) aboutReadingPassed = true;
-            }
-        }
-        if (aboutReadingPassed) cap = aboutTargetScroll;
-        const speed = aboutVisualScroll < read ? .36 : .30;
-        aboutVisualScroll = Math.min(cap, aboutVisualScroll + stage * speed * dt);
-    }
-    updateScrollStages(aboutVisualScroll);
-    if (Math.abs(aboutVisualScroll - aboutTargetScroll) > 1) {
-        aboutPaceFrame = requestAnimationFrame(paceAboutScroll);
-    } else {
-        aboutPaceFrame = 0;
-    }
-}
+let aboutScrollFrame = 0;
 window.addEventListener("scroll", () => {
-    const next = window.scrollY;
-    // A deliberate backward gesture cancels a queued forward skip at once.
-    if (next < aboutTargetScroll - 2) aboutVisualScroll = next;
-    aboutTargetScroll = next;
-    if (!aboutPaceFrame) {
-        aboutPaceLastTime = performance.now();
-        aboutPaceFrame = requestAnimationFrame(paceAboutScroll);
+    if (!aboutScrollFrame) {
+        aboutScrollFrame = requestAnimationFrame(() => {
+            aboutScrollFrame = 0;
+            aboutVisualScroll = window.scrollY;
+            updateScrollStages(aboutVisualScroll);
+        });
     }
 }, {passive:true});
 
