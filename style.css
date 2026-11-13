@@ -4806,3 +4806,10 @@ html {
  .rock-rest-ball{position:absolute!important;left:calc(64% - 20px)!important;top:calc(26% - 33px)!important;width:40px!important;height:40px!important;z-index:5;cursor:default!important;}
  .rock-rest-ball .ball-sprite{width:100%;height:100%;object-fit:contain;}
 }
+
+/* No vignette over the falling or settled achievements environment. */
+.hero.cinematic-unfold .projects-view::after {background:none!important;}
+
+
+/* Keep the printed artwork on the same mesh after the creases settle. */
+.hero.cinematic-unfold .sheet-achieve {opacity:0!important;visibility:hidden!important;}

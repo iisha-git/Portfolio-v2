@@ -31,8 +31,10 @@
     let originalPaperMaterial,softPaperMaterial;
     let handoffPositions=null;
     let handoffDiameter=0;
+    let handoffElapsed=0,handoffAngularVelocity=0,handoffVelocityX=0,handoffVelocityY=0;
     let handoffCenter={x:0,y:0},handoffAngle=0,handoffSize=0;
     const handoffBlend={value:1};
+    const printedReveal={value:0};
 
     // Dimensions calibrated to the sheet texture aspect ratios.
     // Desktop uses her ORIGINAL torn paper (assets/paper-slide.png, 1024 x 470):
@@ -43,8 +45,8 @@
     const TEXTURE_URL = "assets/paper-slide.png";
     // Desktop: tiny downward nudge so the fixed top nav clears the banner's top edge.
     const SHEET_Y = PORTRAIT ? 0 : -0.1;
-    const COLS = 64;
-    const ROWS = 32;
+    const COLS = 18;
+    const ROWS = 12;
 
     // 8 chaotic, multi-angle origami crease directions (breaks any vertical/curtain symmetry)
     const PHASES = [1.2, 3.7, 0.5, 4.9, 2.1, 5.4, 0.8, 3.1];
@@ -154,8 +156,12 @@
         vertexV = new Float32Array(count);
 
         for (let i = 0; i < count; i++) {
-            const fx = posAttr.getX(i);
-            const fy = posAttr.getY(i);
+            let fx = posAttr.getX(i);
+            let fy = posAttr.getY(i);
+            const gridX=i%(COLS+1),gridY=Math.floor(i/(COLS+1));
+            const rnd=(n)=>{const v=Math.sin(n*91.713)*43758.5453;return v-Math.floor(v);};
+            if(gridX>0 && gridX<COLS)fx+=(rnd(i+7)-.5)*PLANE_W/COLS*.72;
+            if(gridY>0 && gridY<ROWS)fy+=(rnd(i+73)-.5)*PLANE_H/ROWS*.72;
             const fz = 0.0;
 
             flatPositions[i * 3 + 0] = fx;
@@ -167,6 +173,7 @@
 
             vertexU[i] = uNorm;
             vertexV[i] = vNorm;
+            geometry.attributes.uv.setXY(i,uNorm,vNorm);
 
             const { bx, by, bz } = getCrumpledBallCoord(fx, fy, uNorm, vNorm);
             crumpledPositions[i * 3 + 0] = bx;
@@ -200,13 +207,20 @@
         scene.add(mesh);
         originalPaperMaterial=material;
         const ballTexture=loader.load("assets/paper-ball.png");
+        const printedTexture=loader.load("assets/achievements/printed-sheet.png");
+        if(THREE.sRGBEncoding)printedTexture.encoding=THREE.sRGBEncoding;
         if(THREE.sRGBEncoding)ballTexture.encoding=THREE.sRGBEncoding;
-        softPaperMaterial=new THREE.MeshLambertMaterial({map:texture,transparent:true,flatShading:false,side:THREE.DoubleSide,alphaTest:.02});
+        softPaperMaterial=new THREE.MeshStandardMaterial({map:texture,roughness:1,metalness:0,transparent:true,flatShading:true,side:THREE.DoubleSide,alphaTest:.02});
         softPaperMaterial.onBeforeCompile=shader=>{
             shader.uniforms.handoffBall={value:ballTexture};
             shader.uniforms.handoffBlend=handoffBlend;
-            shader.fragmentShader='uniform sampler2D handoffBall;uniform float handoffBlend;\n'+shader.fragmentShader;
+            shader.uniforms.printedSheet={value:printedTexture};
+            shader.uniforms.printedReveal=printedReveal;
+            shader.fragmentShader='uniform sampler2D handoffBall;uniform float handoffBlend;uniform sampler2D printedSheet;uniform float printedReveal;\n'+shader.fragmentShader;
             shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+                vec4 printSample=texture2D(printedSheet,vUv);
+                printSample.rgb=mapTexelToLinear(printSample).rgb;
+                diffuseColor.rgb=mix(diffuseColor.rgb,printSample.rgb,printedReveal);
                 vec4 ballSample=texture2D(handoffBall,vUv);
                 ballSample.rgb=mapTexelToLinear(ballSample).rgb;
                 float revealRadius=mix(0.20,0.73,handoffBlend);
@@ -266,9 +280,52 @@
     }
 
     const smooth = t => {t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
-    // Piecewise rigid flaps rotate around real crease lines. Different release
-    // times and a tiny damped rebound give each fold tension, then a flat rest.
+    // The compressed sheet opens as a faceted wad. Its dents and creases
+    // relax in place; the entire sheet never rolls or moves toward the camera.
+    function unfurlFromBall(p) {
+        if(!mesh.material.flatShading){mesh.material.flatShading=true;mesh.material.needsUpdate=true;}
+        const a=geometry.attributes.position,dst=a.array;
+        const q=Math.max(0,Math.min(1,(p-.012)/.948));
+        const textureRelease=smooth(q/.13);
+        printedReveal.value=smooth((q-.56)/.40);
+        handoffBlend.value=textureRelease;
+        const centering=smooth((q-.20)/.80);
+        const centerX=(handoffCenter.x+handoffVelocityX*Math.min(handoffElapsed,.18))*(1-centering);
+        const centerY=(handoffCenter.y-handoffVelocityY*Math.min(handoffElapsed,.18))*(1-centering);
+        const spriteAngle=handoffAngle-handoffAngularVelocity*Math.min(handoffElapsed,.09);
+        const co=Math.cos(spriteAngle),si=Math.sin(spriteAngle);
+        const hash=(x,y)=>{const n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);};
+        const expansion=smooth(q);
+        for(let i=0;i<a.count;i++){
+            const j=i*3,fx=flatPositions[j],fy=flatPositions[j+1];
+            const nx=fx/(PLANE_W*.5),ny=fy/(PLANE_H*.5);
+            const col=Math.round(vertexU[i]*COLS),row=Math.round(vertexV[i]*ROWS);
+            const edge=Math.max(Math.abs(nx),Math.abs(ny));
+            // Each fixed crease vertex releases on its own schedule. The
+            // triangles between them remain straight, rigid-looking facets.
+            const releaseStart=.04+.16*edge+.08*hash(Math.floor(col/3),Math.floor(row/3));
+            const release=smooth((q-releaseStart)/(1-releaseStart));
+            const compact=handoffDiameter*.40;
+            const bx=crumpledPositions[j]*compact,by=crumpledPositions[j+1]*compact;
+            const x=bx+(fx-bx)*release;
+            const y=by+(fy-by)*release;
+            const ridge=hash(col+15,row+9);
+            const depth=(handoffDiameter*.25+2.8*Math.sin(Math.PI*release))*(1-release);
+            const z=-(.12+ridge*.88)*depth;
+            const ix=(vertexU[i]-.5)*handoffSize,iy=(vertexV[i]-.5)*handoffSize;
+            const sx=ix*co-iy*si,sy=ix*si+iy*co;
+            dst[j]=sx*(1-textureRelease)+x*textureRelease+centerX;
+            dst[j+1]=sy*(1-textureRelease)+y*textureRelease+centerY;
+            dst[j+2]=z*textureRelease;
+        }
+        a.needsUpdate=true;geometry.computeVertexNormals();
+        mesh.rotation.set(0,0,0);mesh.position.set(0,SHEET_Y*centering,0);mesh.scale.set(1,1,1);
+        paperAmbient.intensity=.57;paperKey.intensity=.43;
+        renderer.render(scene,camera);
+    }
+
     function physicalSheet(p) {
+        if(!buildingCurlCache && handoffPositions){unfurlFromBall(p);return;}
         const a=geometry.attributes.position;
         if(!buildingCurlCache && curlCache.length===49){
             const f=Math.max(0,Math.min(48,p*48)),lo=Math.floor(f),hi=Math.min(48,lo+1),u=f-lo;
@@ -335,13 +392,14 @@
             const ox=(maxX+minX)/2,oy=(maxY+minY)/2;
             for(let j=0;j<dst.length;j+=3){dst[j]=(dst[j]-ox)*scale+ox;dst[j+1]=(dst[j+1]-oy)*scale+oy;dst[j+2]*=scale;}
 
-            const angle=handoffAngle*(1-shapeBlend),co=Math.cos(angle),si=Math.sin(angle);
+            const momentum=.32*(1-Math.exp(-handoffElapsed/.32));
+            const angle=(handoffAngle-handoffAngularVelocity*momentum)*(1-shapeBlend),co=Math.cos(angle),si=Math.sin(angle);
             for(let i=0;i<a.count;i++){
                 const j=i*3;
                 const ix=(vertexU[i]-.5)*handoffSize,iy=(vertexV[i]-.5)*handoffSize;
                 const x=ix*(1-shapeBlend)+dst[j]*shapeBlend;
                 const y=iy*(1-shapeBlend)+dst[j+1]*shapeBlend;
-                dst[j]=x*co-y*si+handoffCenter.x*(1-shapeBlend);
+                dst[j]=x*co-y*si+(handoffCenter.x+handoffVelocityX*momentum)*(1-shapeBlend);
                 dst[j+1]=x*si+y*co+handoffCenter.y*(1-shapeBlend);
                 dst[j+2]*=shapeBlend;
             }
@@ -439,7 +497,12 @@
     }
 
     // Public API
-    window.preparePaperBallHandoff=function(sprite){
+    window.updatePaperHandoffMotion=function(seconds){handoffElapsed=seconds;};
+    window.preparePaperBallHandoff=function(sprite,motion={}){
+        handoffElapsed=0;
+        handoffVelocityY=(motion.velocityY||0)/window.innerHeight*2*(camera.position.z*Math.tan(camera.fov*Math.PI/360));
+        handoffAngularVelocity=(motion.angularVelocity||0)*Math.PI/180;
+        handoffVelocityX=(motion.velocityX||0)/window.innerWidth*2*(camera.position.z*Math.tan(camera.fov*Math.PI/360)*camera.aspect);
         const cs=getComputedStyle(sprite),m=new DOMMatrix(cs.transform);
         const size=sprite.offsetWidth,origin=size/2;
         const halfH=camera.position.z*Math.tan(camera.fov*Math.PI/360);

@@ -86,6 +86,10 @@ function measureStage() {
 // ---------------------------------------------------------------
 
 let cinematicSlideLock = false;
+// The sheet opens only through the ball, never from the old scroll trigger.
+let paperJourneyOpened = false;
+let returningToProjects = false;
+let reverseWheelAmount=0,reverseWheelTime=0;
 let targetSlide = 0;
 let displaySlide = 0;
 let slideFrame = 0;
@@ -100,6 +104,8 @@ function applySlide(progress) {
     progress = clamp01(progress);
 
     if (progress <= 0.001) {
+        hero.classList.remove("sheet-open");
+        hero.style.setProperty("--cinematic-ink","0");
         if (slideActive) {
             slideActive = false;
             paperSlide.style.visibility = "hidden";
@@ -139,6 +145,11 @@ function applySlide(progress) {
 
 function setSlideTarget(progress) {
     if (cinematicSlideLock) return;
+    if (!paperJourneyOpened) {
+        targetSlide = displaySlide = 0;
+        applySlide(0);
+        return;
+    }
     targetSlide = clamp01(progress);
     displaySlide = targetSlide;
     applySlide(displaySlide);
@@ -621,6 +632,11 @@ function evalFlightSpline(t) {
 }
 
 function updateScrollStages(scroll) {
+    if (returningToProjects) return;
+    if (paperJourneyOpened && !cinematicSlideLock && scroll >= ZOOM.projectsStart && scroll < ZOOM.slideStart + ZOOM.slideSpan*.85) {
+        returnToProjects();
+        return;
+    }
     const stage = ZOOM.height || hero.clientHeight || 1;
 
     // Hard guard whenever scrolled past home
@@ -637,7 +653,7 @@ function updateScrollStages(scroll) {
     setTearTarget((scroll - ZOOM.rest) / stage);
 
     // Stage 2: About view (stamps reveal once tear is clearing and flight begins)
-    if (scroll > stage * 0.75 && scroll <= stage * 3.55) {
+    if (scroll > stage * 0.75 && scroll < ZOOM.projectsStart) {
         hero.classList.add("about-view");
     } else {
         hero.classList.remove("about-view");
@@ -648,7 +664,7 @@ function updateScrollStages(scroll) {
     // - Slide (Paper Unfold / Contact): dark-ink-all (all elements black ink on light paper)
     // - About & Projects: all elements white on dark background
     if (socialRail) {
-        const isSlide = scroll >= (ZOOM.slideStart || stage * 4.70) - 40;
+        const isSlide = paperJourneyOpened && scroll >= (ZOOM.slideStart || stage * 4.70) - 40;
         const isHome  = scroll <= stage * 0.85;
         if (isSlide) {
             socialRail.classList.add("dark-ink-all");
@@ -824,8 +840,8 @@ function updateScrollStages(scroll) {
 
     // Stage 3: Projects Showcase View (Chapter 02 - PROJECTS I'VE BUILT)
     if (projectsView) {
-        const inProjectsView = scroll >= ZOOM.projectsStart && scroll < ZOOM.projectsEnd;
-        const exitingProjects = scroll < (ZOOM.projectsStart - 80) || scroll >= (ZOOM.projectsEnd + 80);
+        const inProjectsView = scroll >= ZOOM.projectsStart && (!paperJourneyOpened || scroll < ZOOM.projectsEnd);
+        const exitingProjects = scroll < ZOOM.projectsStart || (paperJourneyOpened && scroll >= (ZOOM.projectsEnd + 80));
 
         if (inProjectsView) {
             projectsView.classList.add("projects-active");
@@ -898,7 +914,9 @@ function perchBall() {
 }
 
 function resetPaperBall() {
-    hero.classList.remove("cinematic-unfold","fall-tracking");
+    paperJourneyOpened = false;
+    hero.classList.remove("cinematic-unfold","fall-tracking","sheet-open");
+    hero.style.setProperty("--cinematic-ink","0");
     cinematicSlideLock = false;
     if(restoreFallScene){restoreFallScene();restoreFallScene=null;}
     document.querySelectorAll(".fall-depth-extension,.fall-project-echoes,.rock-roll-prepared").forEach(n=>n.remove());
@@ -926,6 +944,23 @@ function resetPaperBall() {
             ball.classList.add("perched");
         });
     }
+}
+
+async function returnToProjects() {
+    if (returningToProjects || cinematicSlideLock) return;
+    returningToProjects = true;
+    // Fade the finished sheet away, then restore the last project cleanly.
+    const layers=[paperSlide,document.querySelector(".sheet-achieve")].filter(Boolean);
+    const fades=layers.map(el=>el.animate([{opacity:getComputedStyle(el).opacity},{opacity:0}],{duration:280,fill:"forwards",easing:"ease-out"}));
+    await Promise.all(fades.map(a=>a.finished.catch(()=>{})));
+    resetPaperBall();
+    targetSlide=displaySlide=0;
+    applySlide(0);
+    window.dispatchEvent(new CustomEvent("project-camera-return"));
+    window.scrollTo({top:ZOOM.projectsStart+10,behavior:"instant"});
+    returningToProjects=false;
+    updateScrollStages(window.scrollY);
+    fades.forEach(a=>a.cancel());
 }
 
 function setupProjectNavFocus() {
@@ -968,48 +1003,70 @@ async function rollPaperAcrossRocks(ball) {
     ball.style.visibility = "hidden";
     const x = f => rock.left + rock.width * f;
     const y = f => rock.top + rock.height * f;
-    // Give contact phases their own time. Free fall below stays fast.
-    const frames = [],landmarks=[];
-    let t=0,px=rect.left+r,py=rect.top+r,spin=0;
+    // Integrate momentum on the illustrated support lines. Airborne motion
+    // uses gravity; impacts lose energy, not a timed stop/restart.
+    const frames=[],landmarks=[];
+    let t=0,px=rect.left+r,py=rect.top+r,spin=0,vx=105,vy=0;
+    const gravity=2500,dt=1/240;
     const put=()=>frames.push({t,x:px,y:py,spin});
     const mark=name=>landmarks.push({name,t,x:px,y:py});
-    const hold=dt=>{t+=dt;put();};
-    const roll=(nx,ny,dt)=>{
-        const sx=px,sy=py,ss=spin,st=t;
-        for(let j=1;j<=30;j++){
-            const u=j/30,q=u*u*(3-2*u);
-            px=sx+(nx-sx)*q;py=sy+(ny-sy)*q;
-            spin=ss+(px-sx)/r*180/Math.PI;t=st+dt*u;put();
+    const advance=(nx,ny,h,air=false)=>{
+        const distance=Math.hypot(nx-px,ny-py);
+        spin+=(air?vx*h:distance)/r*180/Math.PI;
+        px=nx;py=ny;t+=h;put();
+    };
+    const roll=(nx,ny,surfaceGrade=null)=>{
+        const sx=px,sy=py,slope=(ny-sy)/(nx-sx);
+        while(px<nx-.001){
+            // Perspective makes the front lip rise in screen Y even when
+            // the physical tread slopes downward toward the viewer.
+            const grade=surfaceGrade===null?slope:surfaceGrade;
+            const acceleration=gravity*.10*grade/(1+grade*grade)-3;
+            const nextV=Math.max(0,vx+acceleration*dt);
+            const h=Math.min(dt,(nx-px)/nextV);
+            vx=Math.max(0,vx+acceleration*h);vy=vx*slope;
+            const q=Math.min(nx,px+vx*h);
+            advance(q,sy+(q-sx)*slope,h);
         }
     };
-    const drop=(nx,ny,dt)=>{
-        const sx=px,sy=py,ss=spin,st=t;
-        for(let j=1;j<=30;j++){
-            const u=j/30;px=sx+(nx-sx)*u;py=sy+(ny-sy)*u*u;
-            spin=ss+(nx-sx)/r*100*u;t=st+dt*u;put();
+    const drop=surface=>{
+        // The current horizontal velocity determines the landing location.
+        // No target-x interpolation or speed reset at the cliff lip.
+        while(py<surface){
+            const h=Math.min(dt,(-vy+Math.sqrt(vy*vy+2*gravity*(surface-py)))/gravity);
+            if(h<.000001)break;
+            advance(px+vx*h,py+vy*h+.5*gravity*h*h,h,true);vy+=gravity*h;
         }
+        py=surface;put();return Math.abs(vy);
     };
-    const bounce=(dx,h,dt)=>{
-        const sx=px,sy=py,ss=spin,st=t;
-        for(let j=1;j<=20;j++){
-            const u=j/20;px=sx+dx*u;py=sy-4*h*u*(1-u);
-            spin=ss+dx/r*180/Math.PI*u;t=st+dt*u;put();
+    const rebounds=(impact,prefix)=>{
+        vx*=.96;
+        for(let j=0;j<2;j++){
+            const restitution=j===0?.20:.075;
+            const launch=impact*restitution;
+            const duration=2*launch/gravity;
+            let elapsed=0;const base=py;
+            while(elapsed<duration-.000001){
+                const h=Math.min(dt,duration-elapsed);elapsed+=h;
+                vx=Math.max(0,vx-3*h);
+                advance(px+vx*h,base-launch*elapsed+.5*gravity*elapsed*elapsed,h,true);
+            }
+            py=base;vy=0;put();
+            if(j===0)mark(prefix+"-first-rebound");
         }
+        mark(prefix+"-settled");
     };
-    put();mark("upper-rest");hold(.20);
-    roll(x(.68),y(.29)-r*.83,.65);mark("upper-rim");
-    // Land on the visible front half of the keyboard, never its display.
-    drop(deck.left+deck.width*.64,deck.top+deck.height*.45-r*.83,.62);mark("keyboard-contact");
-    bounce(10,11,.25);mark("keyboard-first-rebound");
-    bounce(4,3,.14);hold(.18);mark("keyboard-settled");
-    roll(deck.right+r*.1,deck.top+deck.height*.47-r*.83,.85);mark("keyboard-rim");
-    // Two supporting rock shelves, with smaller rebounds after each impact.
-    drop(x(.83),y(.65)-r*.83,.36);mark("middle-rock-contact");
-    bounce(10,8,.23);bounce(3,2,.12);hold(.18);mark("middle-rock-settled");
-    roll(x(.90),y(.64)-r*.83,.72);mark("middle-rock-rim");
-    drop(x(.925),y(.80)-r*.83,.45);mark("lower-rock-contact");
-    bounce(8,6,.22);bounce(3,1.5,.11);hold(.18);mark("lower-rock-settled");
-    roll(x(.985),y(.77)-r*.83,1.05);mark("final-rim");
+    put();mark("upper-rest");
+    roll(x(.68),y(.29)-r*.83);mark("upper-rim");
+    const keyboardImpact=drop(deck.top+deck.height*.45-r*.83);mark("keyboard-contact");
+    rebounds(keyboardImpact,"keyboard");
+    roll(deck.right+r*.1,deck.top+deck.height*.47-r*.83);mark("keyboard-rim");
+    const middleImpact=drop(y(.65)-r*.83);mark("middle-rock-contact");
+    rebounds(middleImpact,"middle-rock");
+    roll(x(.90),y(.64)-r*.83,.55);mark("middle-rock-rim");
+    const lowerImpact=drop(y(.80)-r*.83);mark("lower-rock-contact");
+    rebounds(lowerImpact,"lower-rock");
+    roll(x(.985),y(.77)-r*.83,.10);mark("final-rim");
     window.rockRouteReview={frames,landmarks,duration:t};
     // Preinstall the decoded environment while the original rocks still cover it.
     const depthScene=document.querySelector(".projects-stage .cam3d");
@@ -1041,6 +1098,8 @@ async function rollPaperAcrossRocks(ball) {
     const content=document.querySelector(".sheet-achieve");
     const oldStyle=paper.style.cssText,oldContentStyle=content?content.style.cssText:"";
     restoreCinematicPaper=()=>{paper.style.cssText=oldStyle;if(content)content.style.cssText=oldContentStyle;};
+    hero.style.setProperty("--cinematic-ink","0");
+    hero.classList.remove("sheet-open");
     hero.classList.add("cinematic-unfold");
     Object.assign(paper.style,{visibility:"visible",opacity:".001",zIndex:"999",willChange:"opacity"});
     if(content){content.style.zIndex="1001";content.style.willChange="opacity";}
@@ -1090,15 +1149,15 @@ async function rollPaperAcrossRocks(ball) {
     const dropDistance=window.innerHeight*1.65;
     const cameraFrames=[],ballFrames=[];
     for(let j=0;j<=60;j++){
-        const u=j/60,fall=.6*u+.4*u*u;
+        const u=j/60,fall=u;
         // A small camera approach across the fall, flat at both ends.
         const fallZoom=zoom+.12*(u*u*(3-2*u));
         const wx=startX-window.innerWidth*.10*u;
         const wy=startY+entryDrop+dropDistance*fall;
-        const sx=cx+Math.sin(u*Math.PI)*16;
-        const sy=cy+window.innerHeight*.045*Math.sin(u*Math.PI);
+        const sx=cx+12*u;
+        const sy=cy+20*u;
         cameraFrames.push({offset:u,transform:`translate(${sx-sceneRect.left-wx*fallZoom}px,${sy-sceneRect.top-wy*fallZoom}px) scale(${fallZoom})`,transformOrigin:"0 0"});
-        ballFrames.push({offset:u,transform:`translate(${sx-r}px,${sy-r}px) rotate(${spin+45+510*u}deg) scale(${fallZoom})`});
+        ballFrames.push({offset:u,transform:`translate(${sx-r}px,${sy-r}px) rotate(${spin+45+1000*u}deg) scale(${fallZoom})`});
     }
     rockCameraAnimation.cancel();rockRollAnimation.cancel();
     rockCameraAnimation=scene.animate(cameraFrames,{duration:dropDistance/fallSpeed*1000,easing:"linear",fill:"forwards"});
@@ -1106,6 +1165,7 @@ async function rollPaperAcrossRocks(ball) {
     try{await rockRollAnimation.finished;}catch(_){return;}
     if(run!==rockRollRun)return;
     paperBallState="unfolding";
+    paperJourneyOpened=true;
     // Keep EVERY visible scene layer at the identical crop across the scroll.
     // Clone the full view, not just the deeper image. Its computed camera
     // transform is captured before cancelling the original animation.
@@ -1122,9 +1182,10 @@ async function rollPaperAcrossRocks(ball) {
     const originalVisibility=view.style.visibility;
     const restoreSceneBefore=restoreFallScene;
     restoreFallScene=()=>{restoreSceneBefore();view.style.visibility=originalVisibility;};
-    const descentTravel=720*1.7*2.650/3;
+    const openingDuration=1100;
+    const descentTravel=fallSpeed*(zoom+.12)*openingDuration/1000/3;
     rockCameraAnimation.cancel();
-    rockCameraAnimation=scene.animate([{transform:matrix},{transform:`translateY(${-descentTravel}px) ${matrix}`}],{duration:2650,easing:"cubic-bezier(.333333,.999999,.666667,1)",fill:"forwards"});
+    rockCameraAnimation=scene.animate([{transform:matrix},{transform:`translateY(${-descentTravel}px) ${matrix}`}],{duration:openingDuration,easing:"cubic-bezier(.333333,.999999,.666667,1)",fill:"forwards"});
     // Keep the original hidden until the complete overlay is no longer needed.
     // Keep one canvas in its final coordinate system for the whole unfold.
     // Scroll under the opaque scene veil before opening, never after it.
@@ -1133,7 +1194,7 @@ async function rollPaperAcrossRocks(ball) {
     if(run!==rockRollRun)return;
     if(window.setPaperUnfoldCornerEntry)window.setPaperUnfoldCornerEntry(false);
     if(window.setPaperUnfoldFallEntry)window.setPaperUnfoldFallEntry(true);
-    if(window.preparePaperBallHandoff)window.preparePaperBallHandoff(sprite);
+    if(window.preparePaperBallHandoff)window.preparePaperBallHandoff(sprite,{angularVelocity:1000/(dropDistance/fallSpeed),velocityX:12/(dropDistance/fallSpeed),velocityY:20/(dropDistance/fallSpeed)});
     applySlide(.012);
     // Same bitmap, size, angle and position on the mesh's first frame.
     // Remove the old sprite only after the replacement has rendered.
@@ -1142,15 +1203,17 @@ async function rollPaperAcrossRocks(ball) {
         const start=performance.now();
         function frame(now){
             if(run!==rockRollRun){resolve();return;}
-            const u=Math.min(1,(now-start)/2650);
-            const progress=.012+.948*(u*u*(3-2*u));
+            const u=Math.min(1,(now-start)/openingDuration);
+            const progress=.012+.948*u;
+            if(window.updatePaperHandoffMotion)window.updatePaperHandoffMotion((now-start)/1000);
             applySlide(progress);
-            hero.style.setProperty("--cinematic-ink",String(clamp01((progress-.74)/.18)));
+            // Keep achievements hidden for the entire physical unfold.
             if(u<1)requestAnimationFrame(frame);else resolve();
         }
         requestAnimationFrame(frame);
     });
     if(run!==rockRollRun)return;
+    hero.style.setProperty("--cinematic-ink","1");
     // Set destination scroll only once the now-opaque sheet covers the page.
     frozenCamera.style.transform=getComputedStyle(scene).transform;
     veil.style.visibility="visible";view.style.visibility="hidden";
@@ -1210,6 +1273,7 @@ function setupPaperBallInteractions() {
 
             if (paperBallState !== "bouncing") return;
             paperBallState = "unfolding";
+            paperJourneyOpened = true;
 
             // the parked plane takes off as its crumpled page unrolls
             const deskPlane = document.getElementById("deskPlane");
@@ -1292,7 +1356,7 @@ function syncScrollAndTear() {
     }
 
     if (socialRail) {
-        const isSlide = window.scrollY >= (ZOOM.slideStart || stage * 4.70) - 40;
+        const isSlide = paperJourneyOpened && window.scrollY >= (ZOOM.slideStart || stage * 4.70) - 40;
         const isHome  = window.scrollY <= stage * 0.85;
         if (isSlide) {
             socialRail.classList.add("dark-ink-all");
@@ -1526,6 +1590,16 @@ function setupProjectsCamera() {
 
     window.addEventListener("wheel", function (e) {
         if (window.innerWidth <= 768) return;
+        if (returningToProjects) {e.preventDefault();return;}
+        if (paperJourneyOpened && !cinematicSlideLock) {
+            e.preventDefault();
+            const now=performance.now();
+            if(now-reverseWheelTime>500)reverseWheelAmount=0;
+            reverseWheelTime=now;
+            reverseWheelAmount=e.deltaY<0?reverseWheelAmount-e.deltaY:0;
+            if(reverseWheelAmount>=140){reverseWheelAmount=0;returnToProjects();}
+            return;
+        }
         if (!document.querySelector(".projects-view.projects-active")) return;
         if (Math.abs(e.deltaY) < 3) return;
         if(paperBallState!=="perched"){e.preventDefault();return;}
@@ -1536,11 +1610,18 @@ function setupProjectsCamera() {
         }
         if (e.deltaY > 0 && target < .85) { e.preventDefault(); setTarget(Math.min(.85,target + e.deltaY / 3600)); }
         else if (e.deltaY < 0 && target > 0) { e.preventDefault(); setTarget(Math.min(.85,target + e.deltaY / 3600)); }
-        /* at the ends the page scrolls on naturally */
+        if(e.deltaY<0 && target<=0 && prog<=.001) {
+            e.preventDefault();
+            window.scrollTo({top:Math.max(0,window.scrollY+e.deltaY),behavior:"smooth"});
+        }
+        /* Leaving projects requires reaching the overview first. */
     }, { passive: false });
 
     window.addEventListener("keydown", function (e) {
         if (window.innerWidth <= 768) return;
+        if (paperJourneyOpened && !cinematicSlideLock && ["ArrowUp","ArrowLeft","PageUp"].includes(e.key)) {
+            e.preventDefault();returnToProjects();return;
+        }
         if (!document.querySelector(".projects-view.projects-active")) return;
         if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "PageDown") {
             e.preventDefault();
@@ -1553,6 +1634,7 @@ function setupProjectsCamera() {
     navItems.forEach(function (item, i) {
         item.addEventListener("click", function () { setTarget(STOPS[i].p); });
     });
+    window.addEventListener("project-camera-return", function() {prog=target=.85;kick();});
     window.addEventListener("project-camera-overview", function(e) { overviewReady = e.detail && e.detail.onSettled; setTarget(0); });
     window.addEventListener("resize", kick);
     apply(); /* paint the overview state on load */
