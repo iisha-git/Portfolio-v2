@@ -29,8 +29,10 @@
     const curlCache=[];
     let buildingCurlCache=false;
     let originalPaperMaterial,softPaperMaterial;
+    let handoffSprite=null,handoffSpritePixels=0,handoffPixelsPerUnit=1;
     let handoffPositions=null;
     let handoffDiameter=0;
+    let compactBounds={cx:0,cy:0,width:1,height:1};
     let handoffElapsed=0,handoffAngularVelocity=0,handoffVelocityX=0,handoffVelocityY=0;
     let handoffCenter={x:0,y:0},handoffAngle=0,handoffSize=0;
     const handoffBlend={value:1};
@@ -278,7 +280,8 @@
         const centering=smooth((q-.20)/.80);
         const centerX=(handoffCenter.x+handoffVelocityX*Math.min(handoffElapsed,.18))*(1-centering) - .12*Math.sin(Math.PI*q);
         const centerY=(handoffCenter.y-handoffVelocityY*Math.min(handoffElapsed,.18))*(1-centering) + .06*Math.sin(Math.PI*q);
-        const spriteAngle=handoffAngle-handoffAngularVelocity*Math.min(handoffElapsed,.09);
+        const spinTime=.18*(1-Math.exp(-handoffElapsed/.18));
+        const spriteAngle=handoffAngle-handoffAngularVelocity*spinTime;
         const co=Math.cos(spriteAngle),si=Math.sin(spriteAngle);
         const hash=(x,y)=>{const n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);};
         const expansion=smooth(q);
@@ -295,8 +298,10 @@
             const island=Math.exp(-((nx-.42)**2+(ny+.32)**2)/.16);
             const releaseStart=.055+.055*edge+.19*diagonal+.060*island+.045*hash(Math.floor(col/3),Math.floor(row/2));
             const release=smooth((q-releaseStart)/(1-releaseStart));
-            const compact=handoffDiameter*.40;
-            const bx=crumpledPositions[j]*compact,by=crumpledPositions[j+1]*compact;
+            // Match the falling sprite's visible diameter before any crease opens.
+            // The old .40 multiplier made the first folded mesh undersized.
+            const bx=(crumpledPositions[j]-compactBounds.cx)*handoffDiameter/compactBounds.width;
+            const by=(crumpledPositions[j+1]-compactBounds.cy)*handoffDiameter/compactBounds.height;
             const x=bx+(fx-bx)*release;
             const y=by+(fy-by)*release;
             const ridge=hash(col+15,row+9);
@@ -304,13 +309,31 @@
             const z=-(.12+ridge*.88)*depth;
             const ix=(vertexU[i]-.5)*handoffSize,iy=(vertexV[i]-.5)*handoffSize;
             const sx=ix*co-iy*si,sy=ix*si+iy*co;
-            dst[j]=sx*(1-textureRelease)+x*textureRelease+centerX;
-            dst[j+1]=sy*(1-textureRelease)+y*textureRelease+centerY;
-            dst[j+2]=z*textureRelease;
+            // Begin with the matched crumple, not a square that contracts into it.
+            dst[j]=x+centerX;
+            dst[j+1]=y+centerY;
+            dst[j+2]=z;
         }
         a.needsUpdate=true;geometry.computeVertexNormals();
-        mesh.rotation.set(0,0,.025*Math.sin(Math.PI*q));mesh.position.set(0,SHEET_Y*centering,0);mesh.scale.set(1,1,1);
+        // One small spring and recoil as the last creases relax, then rest exactly flat.
+        const settle=Math.max(0,Math.min(1,(q-.62)/.38));
+        const spring=Math.sin(settle*Math.PI*2)*(1-settle);
+        mesh.rotation.set(0,0,.025*Math.sin(Math.PI*q));
+        mesh.position.set(0,SHEET_Y*centering+.045*spring,0);
+        mesh.scale.set(1+.025*spring,1+.018*spring,1);
         paperAmbient.intensity=.57;paperKey.intensity=.43;
+        // Keep the original rounded outline and photographed shading while spinning.
+        // Dissolve it only once the printed creases have started expanding underneath.
+        const opening=smooth((q-.08)/.44);
+        softPaperMaterial.opacity=opening;
+        if(handoffSprite){
+            // Keep the original DOM ball, including its filter and actual pixels.
+            // There is no second ball renderer to swap to.
+            const x=window.innerWidth/2+centerX*handoffPixelsPerUnit;
+            const y=window.innerHeight/2-(centerY+SHEET_Y*centering)*handoffPixelsPerUnit;
+            handoffSprite.style.transform=`translate(${x-handoffSpritePixels/2}px,${y-handoffSpritePixels/2}px) rotate(${-spriteAngle}rad) scale(${handoffSize*handoffPixelsPerUnit/handoffSpritePixels})`;
+            handoffSprite.style.opacity=String(1-opening);
+        }
         renderer.render(scene,camera);
     }
 
@@ -505,8 +528,18 @@
             handoffPositions[i*3]=(sx/window.innerWidth*2-1)*halfW;
             handoffPositions[i*3+1]=(1-sy/window.innerHeight*2)*halfH;
         }
+        handoffSprite=sprite;handoffSpritePixels=size;handoffPixelsPerUnit=window.innerWidth/(2*halfW);
+        const frozenTransform=cs.transform;
+        sprite.style.transform=frozenTransform;
+        sprite.getAnimations().forEach(animation=>animation.cancel());
         handoffSize=size*Math.hypot(m.a,m.b)/window.innerWidth*2*halfW;
         handoffDiameter=handoffSize*.90;
+        let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+        for(let i=0;i<crumpledPositions.length;i+=3){
+            minX=Math.min(minX,crumpledPositions[i]);maxX=Math.max(maxX,crumpledPositions[i]);
+            minY=Math.min(minY,crumpledPositions[i+1]);maxY=Math.max(maxY,crumpledPositions[i+1]);
+        }
+        compactBounds={cx:(minX+maxX)/2,cy:(minY+maxY)/2,width:maxX-minX,height:maxY-minY};
         handoffCenter={x:((m.e+origin)/window.innerWidth*2-1)*halfW,y:(1-(m.f+origin)/window.innerHeight*2)*halfH};
         handoffAngle=-Math.atan2(m.b,m.a);
         handoffBlend.value=0;
@@ -515,7 +548,7 @@
         const nextFallEntry=!!value;
         if(nextFallEntry===fallEntry && renderer && mesh && mesh.material===(nextFallEntry?softPaperMaterial:originalPaperMaterial))return;
         fallEntry=nextFallEntry;
-        if(!fallEntry){handoffPositions=null;handoffBlend.value=1;}
+        if(!fallEntry){handoffPositions=null;handoffBlend.value=1;handoffSprite=null;if(softPaperMaterial)softPaperMaterial.opacity=1;}
         if(renderer)renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
         if(mesh)mesh.material=fallEntry?softPaperMaterial:originalPaperMaterial;
         if(!fallEntry && paperAmbient && paperKey){paperAmbient.intensity=.60;paperKey.intensity=.35;mesh.material.flatShading=true;mesh.material.needsUpdate=true;}

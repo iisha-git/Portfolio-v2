@@ -915,6 +915,7 @@ function perchBall() {
 }
 
 function resetPaperBall() {
+    document.querySelectorAll(".rock-contact-effects").forEach(el=>el.remove());
     paperJourneyOpened = false;
     hero.classList.remove("cinematic-unfold","fall-tracking","sheet-open");
     hero.style.setProperty("--cinematic-ink","0");
@@ -1122,9 +1123,60 @@ async function rollPaperAcrossRocks(ball) {
         {transform:"translate(0,0) scale(1)",transformOrigin:"0 0"},
         {transform:`translate(${(1-approachScale)*(px-approachRect.left)}px,${(1-approachScale)*(py-approachRect.top)}px) scale(${approachScale})`,transformOrigin:"0 0"}
     ],{delay:approachDelay,duration:approachDuration,easing:"linear",fill:"forwards"});
+    // Impact effects share the existing route clock; they never alter its physics.
+    document.querySelectorAll(".rock-contact-effects").forEach(el=>el.remove());
+    const contactEffects=document.createElement("div");contactEffects.className="rock-contact-effects";
+    Object.assign(contactEffects.style,{position:"fixed",inset:"0",pointerEvents:"none",zIndex:"999"});
+    document.body.appendChild(contactEffects);
+    const routeZoom=seconds=>1+.22*clamp01((seconds*1000-approachDelay)/approachDuration);
+    const projected=(xx,yy,seconds)=>{const z=routeZoom(seconds);return {x:px+(xx-px)*z,y:py+(yy-py)*z,z};};
+    // The contact shadow stays on the rock; airborne splash strokes are unclipped.
+    const groundEffects=document.createElement("div");contactEffects.appendChild(groundEffects);
+    Object.assign(groundEffects.style,{position:"absolute",inset:"0"});
+    Object.assign(groundEffects.style,{maskImage:'url("assets/rock-contact-mask.png")',maskRepeat:"no-repeat",maskMode:"alpha"});
+    groundEffects.animate(frames.map(p=>{
+        const point=projected(rock.left,rock.top,p.t);
+        return {offset:p.t/t,maskPosition:`${point.x}px ${point.y}px`,maskSize:`${rock.width*point.z}px ${rock.height*point.z}px`};
+    }),{duration:t*1000,easing:"linear",fill:"forwards"});
+    const supportMarks=landmarks.filter(m=>["upper-rest","upper-rim","keyboard-contact","keyboard-rim","middle-rock-contact","middle-rock-rim","lower-rock-contact","final-rim"].includes(m.name));
+    const shadow=document.createElement("div");groundEffects.appendChild(shadow);
+    Object.assign(shadow.style,{position:"absolute",left:"-20px",top:"-5px",width:"40px",height:"10px",borderRadius:"50%",background:"radial-gradient(ellipse,rgba(0,0,0,.80) 0%,rgba(0,0,0,.36) 38%,transparent 73%)",willChange:"transform,opacity"});
+    const shadowFrames=frames.map(p=>{
+        let a=supportMarks[0],b=supportMarks[1];
+        for(let k=1;k<supportMarks.length;k++){if(p.t<=supportMarks[k].t){a=supportMarks[k-1];b=supportMarks[k];break;}}
+        const airborne=b.name.endsWith("contact"),u=clamp01((p.t-a.t)/Math.max(.001,b.t-a.t));
+        const ground=(airborne?b.y:a.y+(b.y-a.y)*u)+r*.83;
+        const height=Math.max(0,ground-(p.y+r*.83)),near=Math.exp(-height/38);
+        const point=projected(p.x,ground,p.t),spread=1+Math.min(height/65,1.1);
+        const slope=airborne?0:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+        return {offset:p.t/t,opacity:.08+.62*near,transform:`translate(${point.x}px,${point.y}px) rotate(${slope}deg) scale(${point.z*spread},${point.z*(1+height/150)})`};
+    });
+    shadow.animate(shadowFrames,{duration:t*1000,easing:"linear",fill:"forwards"});
+    const impacts=landmarks.filter(m=>m.name.endsWith("contact")||m.name.endsWith("first-rebound")||m.name.endsWith("settled"));
+    impacts.forEach((m,index)=>{
+        const light=!m.name.endsWith("contact");
+        const count=light?3:7;
+        for(let n=0;n<count;n++){
+            const angle=(-158+n/(count-1)*136+(index%2?4:-3))*Math.PI/180;
+            const reach=(light?20:39)+(n%3)*4;
+            const duration=(light?280:410)+(n%2)*25,delay=m.t*1000+(n%3)*8;
+            const el=document.createElement("div");contactEffects.appendChild(el);
+            Object.assign(el.style,{position:"absolute",left:"0",top:"-.6px",width:(light?6:10)+(n%2)*2+"px",height:"1.8px",borderRadius:"1px",background:"#ede4ff",transformOrigin:"0 50%",opacity:"0",willChange:"transform,opacity"});
+            const keyframes=[];
+            for(let k=0;k<=16;k++){
+                const u=k/16,travel=4+reach*u;
+                const point=projected(m.x+Math.cos(angle)*travel,m.y+r*.83+Math.sin(angle)*travel+9*u*u,(delay+duration*u)/1000);
+                const direction=Math.atan2(Math.sin(angle)*reach+18*u,Math.cos(angle)*reach)*180/Math.PI;
+                const fade=Math.min(1,u/.12)*Math.pow(1-u,1.25);
+                keyframes.push({offset:u,opacity:(light?.64:.94)*fade,transform:`translate(${point.x}px,${point.y}px) rotate(${direction}deg) scale(${point.z*(1-.45*u)},${point.z})`});
+            }
+            el.animate(keyframes,{delay,duration,easing:"linear",fill:"both"});
+        }
+    });
     rockRollAnimation = sprite.animate(frames.map(p => ({offset:p.t/t,transform:(()=>{const q=clamp01((p.t*1000-approachDelay)/approachDuration);const e=q;const z=1+.22*e;const ax=px+(p.x-px)*z,ay=py+(p.y-py)*z;return `translate(${ax-r}px,${ay-r}px) rotate(${p.spin}deg) scale(${z})`;})()})), {duration:t*1000,easing:"linear",fill:"forwards"});
     try { await rockRollAnimation.finished; } catch (_) { return; }
     if (run !== rockRollRun) return;
+    contactEffects.remove();
     paperBallState = "falling";
     hero.classList.add("fall-tracking");
     // Only the FINAL edge gets a following camera. Earlier hops are unchanged.
@@ -1204,7 +1256,7 @@ async function rollPaperAcrossRocks(ball) {
     applySlide(.012);
     // Same bitmap, size, angle and position on the mesh's first frame.
     // Remove the old sprite only after the replacement has rendered.
-    sprite.style.visibility="hidden";
+    // Keep the same falling sprite alive while its creases reveal the sheet.
     await new Promise(resolve=>{
         const start=performance.now();
         function frame(now){
