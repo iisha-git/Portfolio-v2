@@ -866,7 +866,8 @@ function updateScrollStages(scroll) {
             hero.classList.remove("projects-view-active");
             projectsView.style.opacity = "";
             projectsView.style.visibility = "";
-            projectsView.style.display = "";
+            // Do not let the outgoing CSS fade sit over About or Home.
+            projectsView.style.display = "none";
             projectsView.style.pointerEvents = "";
 
             if (scroll < ZOOM.projectsStart) {
@@ -949,10 +950,10 @@ function resetPaperBall() {
 async function returnToProjects() {
     if (returningToProjects || cinematicSlideLock) return;
     returningToProjects = true;
-    // Fade the finished sheet away, then restore the last project cleanly.
-    const layers=[paperSlide,document.querySelector(".sheet-achieve")].filter(Boolean);
-    const fades=layers.map(el=>el.animate([{opacity:getComputedStyle(el).opacity},{opacity:0}],{duration:280,fill:"forwards",easing:"ease-out"}));
-    await Promise.all(fades.map(a=>a.finished.catch(()=>{})));
+    // Fade the complete outgoing composition, not just its paper. Keep the
+    // next section concealed until the sheet and old environment are gone.
+    const out=hero.animate([{opacity:1},{opacity:0}],{duration:140,fill:"forwards",easing:"ease-out"});
+    await out.finished.catch(()=>{});
     resetPaperBall();
     targetSlide=displaySlide=0;
     applySlide(0);
@@ -960,7 +961,12 @@ async function returnToProjects() {
     window.scrollTo({top:ZOOM.projectsStart+10,behavior:"instant"});
     returningToProjects=false;
     updateScrollStages(window.scrollY);
-    fades.forEach(a=>a.cancel());
+    // Paint the restored section while it is still concealed.
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const incoming=hero.animate([{opacity:0},{opacity:1}],{duration:140,fill:"forwards",easing:"ease-in"});
+    out.cancel();
+    await incoming.finished.catch(()=>{});
+    incoming.cancel();
 }
 
 function setupProjectNavFocus() {

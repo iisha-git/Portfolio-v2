@@ -206,29 +206,15 @@
         mesh = new THREE.Mesh(geometry, material);
         scene.add(mesh);
         originalPaperMaterial=material;
-        const ballTexture=loader.load("assets/paper-ball.png");
-        const printedTexture=loader.load("assets/achievements/printed-sheet.png");
+        // One printed, torn, textured sheet for every fold and the resting page.
+        // No ball bitmap, blank-paper crossfade, rounded mask, or late ink reveal.
+        const printedTexture=loader.load("assets/achievements/printed-sheet.png",()=>{
+            if(isInitialized)renderAt(lastProgress);
+        });
         if(THREE.sRGBEncoding)printedTexture.encoding=THREE.sRGBEncoding;
-        if(THREE.sRGBEncoding)ballTexture.encoding=THREE.sRGBEncoding;
-        softPaperMaterial=new THREE.MeshStandardMaterial({map:texture,roughness:1,metalness:0,transparent:true,flatShading:true,side:THREE.DoubleSide,alphaTest:.02});
-        softPaperMaterial.onBeforeCompile=shader=>{
-            shader.uniforms.handoffBall={value:ballTexture};
-            shader.uniforms.handoffBlend=handoffBlend;
-            shader.uniforms.printedSheet={value:printedTexture};
-            shader.uniforms.printedReveal=printedReveal;
-            shader.fragmentShader='uniform sampler2D handoffBall;uniform float handoffBlend;uniform sampler2D printedSheet;uniform float printedReveal;\n'+shader.fragmentShader;
-            shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
-                vec4 printSample=texture2D(printedSheet,vUv);
-                printSample.rgb=mapTexelToLinear(printSample).rgb;
-                diffuseColor.rgb=mix(diffuseColor.rgb,printSample.rgb,printedReveal);
-                vec4 ballSample=texture2D(handoffBall,vUv);
-                ballSample.rgb=mapTexelToLinear(ballSample).rgb;
-                float revealRadius=mix(0.20,0.73,handoffBlend);
-                float roundedReveal=1.0-smoothstep(revealRadius-.035,revealRadius+.035,length(vUv-.5));
-                diffuseColor.a=mix(ballSample.a,diffuseColor.a*roundedReveal,handoffBlend);
-            `);
-            shader.fragmentShader=shader.fragmentShader.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );','gl_FragColor = vec4( mix(ballSample.rgb,outgoingLight,handoffBlend), diffuseColor.a );');
-        };
+        printedTexture.generateMipmaps=true;
+        printedTexture.minFilter=THREE.LinearMipmapLinearFilter;
+        softPaperMaterial=new THREE.MeshStandardMaterial({map:printedTexture,roughness:1,metalness:0,transparent:true,flatShading:true,side:THREE.DoubleSide,alphaTest:.02});
         mesh.material=softPaperMaterial;renderer.compile(scene,camera);
         mesh.material=originalPaperMaterial;renderer.compile(scene,camera);
 
@@ -287,11 +273,11 @@
         const a=geometry.attributes.position,dst=a.array;
         const q=Math.max(0,Math.min(1,(p-.012)/.948));
         const textureRelease=smooth(q/.13);
-        printedReveal.value=smooth((q-.56)/.40);
+        printedReveal.value=1;
         handoffBlend.value=textureRelease;
         const centering=smooth((q-.20)/.80);
-        const centerX=(handoffCenter.x+handoffVelocityX*Math.min(handoffElapsed,.18))*(1-centering);
-        const centerY=(handoffCenter.y-handoffVelocityY*Math.min(handoffElapsed,.18))*(1-centering);
+        const centerX=(handoffCenter.x+handoffVelocityX*Math.min(handoffElapsed,.18))*(1-centering) - .12*Math.sin(Math.PI*q);
+        const centerY=(handoffCenter.y-handoffVelocityY*Math.min(handoffElapsed,.18))*(1-centering) + .06*Math.sin(Math.PI*q);
         const spriteAngle=handoffAngle-handoffAngularVelocity*Math.min(handoffElapsed,.09);
         const co=Math.cos(spriteAngle),si=Math.sin(spriteAngle);
         const hash=(x,y)=>{const n=Math.sin(x*127.1+y*311.7)*43758.5453;return n-Math.floor(n);};
@@ -303,7 +289,11 @@
             const edge=Math.max(Math.abs(nx),Math.abs(ny));
             // Each fixed crease vertex releases on its own schedule. The
             // triangles between them remain straight, rigid-looking facets.
-            const releaseStart=.04+.16*edge+.08*hash(Math.floor(col/3),Math.floor(row/3));
+            // Upper-left opens first. The lower-right and two irregular crease
+            // islands lag, with no mirrored or radial release boundary.
+            const diagonal=(nx-ny+2)/4;
+            const island=Math.exp(-((nx-.42)**2+(ny+.32)**2)/.16);
+            const releaseStart=.055+.055*edge+.19*diagonal+.060*island+.045*hash(Math.floor(col/3),Math.floor(row/2));
             const release=smooth((q-releaseStart)/(1-releaseStart));
             const compact=handoffDiameter*.40;
             const bx=crumpledPositions[j]*compact,by=crumpledPositions[j+1]*compact;
@@ -319,7 +309,7 @@
             dst[j+2]=z*textureRelease;
         }
         a.needsUpdate=true;geometry.computeVertexNormals();
-        mesh.rotation.set(0,0,0);mesh.position.set(0,SHEET_Y*centering,0);mesh.scale.set(1,1,1);
+        mesh.rotation.set(0,0,.025*Math.sin(Math.PI*q));mesh.position.set(0,SHEET_Y*centering,0);mesh.scale.set(1,1,1);
         paperAmbient.intensity=.57;paperKey.intensity=.43;
         renderer.render(scene,camera);
     }
@@ -526,7 +516,7 @@
         if(nextFallEntry===fallEntry && renderer && mesh && mesh.material===(nextFallEntry?softPaperMaterial:originalPaperMaterial))return;
         fallEntry=nextFallEntry;
         if(!fallEntry){handoffPositions=null;handoffBlend.value=1;}
-        if(renderer)renderer.setPixelRatio(fallEntry ? .65 : Math.min(window.devicePixelRatio||1,2));
+        if(renderer)renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
         if(mesh)mesh.material=fallEntry?softPaperMaterial:originalPaperMaterial;
         if(!fallEntry && paperAmbient && paperKey){paperAmbient.intensity=.60;paperKey.intensity=.35;mesh.material.flatShading=true;mesh.material.needsUpdate=true;}
     };
