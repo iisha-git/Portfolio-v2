@@ -631,7 +631,58 @@ function evalFlightSpline(t) {
     };
 }
 
-function updateScrollStages(scroll) {
+// About clears completely before the intact Projects staircase arrives.
+// Animate independent parent layers so camera/card transforms stay untouched.
+let projectsEntranceAnimations = [];
+let projectsEntranceRun = 0;
+let projectsEntranceBusy = false;
+function clearProjectsEntrance() {
+    projectsEntranceRun++;
+    projectsEntranceAnimations.forEach(animation => animation.cancel());
+    projectsEntranceAnimations = [];
+    projectsEntranceBusy = false;
+    if (projectsView) projectsView.inert = false;
+}
+function startProjectsEntrance() {
+    clearProjectsEntrance();
+    if (reduceMotion || window.innerWidth <= 768) return;
+    const run = projectsEntranceRun;
+    projectsEntranceBusy = true;
+    projectsView.inert = true;
+    const animate = (node, frames, duration, delay, easing = "cubic-bezier(.22,.72,.2,1)") => {
+        if (!node) return;
+        const animation = node.animate(frames, {
+            duration, delay, easing, fill: "both"
+        });
+        projectsEntranceAnimations.push(animation);
+    };
+    // A virtual downward camera move: the landscape rises from below.
+    // Near planes cover more screen distance than the distant landscape.
+    // The joined support art stays intact and never tilts like a falling card.
+    animate(projectsView.querySelector(".z-stack"), [
+        {offset:0, translate:"0 105vh", scale:"1.025", easing:"cubic-bezier(.42,.02,.18,1)"},
+        {offset:.88, translate:"0 -3px", scale:"1", easing:"ease-in-out"},
+        {offset:1, translate:"0 0", scale:"1"}
+    ], 2300, 80, "linear");
+    projectsView.querySelectorAll(".projects-sidebar,.projects-head,.z-krishi,.z-nyay,.z-bio,.camera-connectors,.rock-rest-ball").forEach(node => {
+        animate(node, [{opacity:0,translate:"0 12px"}, {opacity:1,translate:"0 0"}], 720, 2180);
+    });
+    animate(projectsView.querySelector(".depth-environment"), [{opacity:0},{opacity:1}], 650, 120);
+    [
+        [".depth-far", "38vh", 2550],
+        [".depth-middle", "72vh", 2450],
+        [".depth-near", "150vh", 2300]
+    ].forEach(([selector, distance, duration]) => {
+        animate(projectsView.querySelector(selector), [
+            {translate:"0 "+distance}, {translate:"0 0"}
+        ], duration, 80, "cubic-bezier(.42,.02,.18,1)");
+    });
+    Promise.all(projectsEntranceAnimations.map(animation => animation.finished.catch(()=>{}))).then(() => {
+        if (run === projectsEntranceRun) clearProjectsEntrance();
+    });
+}
+
+function updateScrollStages(scroll, suppressEntrance = false) {
     if (returningToProjects) return;
     if (paperJourneyOpened && !cinematicSlideLock && scroll >= ZOOM.projectsStart && scroll < ZOOM.slideStart + ZOOM.slideSpan*.85) {
         returnToProjects();
@@ -844,12 +895,14 @@ function updateScrollStages(scroll) {
         const exitingProjects = scroll < ZOOM.projectsStart || (paperJourneyOpened && scroll >= (ZOOM.projectsEnd + 80));
 
         if (inProjectsView) {
+            const enteringProjects = !projectsView.classList.contains("projects-active");
             projectsView.classList.add("projects-active");
             hero.classList.add("projects-view-active");
             projectsView.style.opacity = "1";
             projectsView.style.visibility = "visible";
             projectsView.style.display = "block";
             projectsView.style.pointerEvents = "auto";
+            if (enteringProjects && !suppressEntrance) startProjectsEntrance();
 
             // Keep the paper ball perched on the scrapbook spread
             if (paperBallState === "perched") {
@@ -862,6 +915,7 @@ function updateScrollStages(scroll) {
                 }, 1400);
             }
         } else if (exitingProjects) {
+            if (projectsEntranceBusy) clearProjectsEntrance();
             projectsView.classList.remove("projects-active");
             hero.classList.remove("projects-view-active");
             projectsView.style.opacity = "";
@@ -961,7 +1015,7 @@ async function returnToProjects() {
     window.dispatchEvent(new CustomEvent("project-camera-return"));
     window.scrollTo({top:ZOOM.projectsStart+10,behavior:"instant"});
     returningToProjects=false;
-    updateScrollStages(window.scrollY);
+    updateScrollStages(window.scrollY, true);
     // Paint the restored section while it is still concealed.
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const incoming=hero.animate([{opacity:0},{opacity:1}],{duration:140,fill:"forwards",easing:"ease-in"});
@@ -1648,7 +1702,7 @@ function setupProjectsCamera() {
 
     window.addEventListener("wheel", function (e) {
         if (window.innerWidth <= 768) return;
-        if (returningToProjects) {e.preventDefault();return;}
+        if (returningToProjects || projectsEntranceBusy) {e.preventDefault();return;}
         if (paperJourneyOpened && !cinematicSlideLock) {
             e.preventDefault();
             const now=performance.now();
@@ -1681,6 +1735,7 @@ function setupProjectsCamera() {
             e.preventDefault();returnToProjects();return;
         }
         if (!document.querySelector(".projects-view.projects-active")) return;
+        if (projectsEntranceBusy && ["ArrowDown","ArrowRight","PageDown","ArrowUp","ArrowLeft","PageUp"," "].includes(e.key)) { e.preventDefault(); return; }
         if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "PageDown") {
             e.preventDefault();
             if(paperBallState!=="perched")return;
