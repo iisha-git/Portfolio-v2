@@ -1330,6 +1330,71 @@ async function rollPaperAcrossRocks(ball) {
 
 }
 
+// Phone camera descent: one tap follows the ball off its card, then opens
+// the portrait paper only after the fall has settled.
+async function openPhonePaperCinema(ball) {
+    if (window.innerWidth > 768 || paperBallState !== "perched") return;
+    const run = ++rockRollRun;
+    paperBallState = "rolling";
+    cinematicSlideLock = true;
+    const rect = ball.getBoundingClientRect();
+    const sprite = ball.cloneNode(true);
+    sprite.removeAttribute("id");
+    sprite.className = "phone-cinema-ball";
+    Object.assign(sprite.style, {position:"fixed",left:"0",top:"0",width:rect.width+"px",height:rect.height+"px",zIndex:"1000",pointerEvents:"none"});
+    sprite.querySelector(".ball-ground-shadow")?.remove();
+    document.body.appendChild(sprite);
+    ball.style.visibility = "hidden";
+    hero.classList.add("phone-cinema-active");
+    const cx=(innerWidth-rect.width)/2, cy=innerHeight*.40-rect.height/2;
+    const flight=sprite.animate([
+        {transform:`translate(${rect.left}px,${rect.top}px) rotate(0deg)`},
+        {transform:`translate(${rect.left+48}px,${rect.top+16}px) rotate(130deg)`,offset:.24},
+        {transform:`translate(${cx+25}px,${cy+80}px) rotate(470deg)`,offset:.76},
+        {transform:`translate(${cx}px,${cy}px) rotate(610deg)`}
+    ],{duration:1450,easing:"cubic-bezier(.45,0,.3,1)",fill:"forwards"});
+    const departure=projectsView.animate([
+        {transform:"translateY(0)",opacity:1},
+        {transform:"translateY(-115vh)",opacity:0}
+    ],{duration:1200,delay:250,easing:"cubic-bezier(.42,0,.2,1)",fill:"forwards"});
+    await flight.finished.catch(()=>{});
+    if(run!==rockRollRun){sprite.remove();departure.cancel();return;}
+    paperJourneyOpened=true;
+    paperBallState="unfolding";
+    const targetY=ZOOM.slideStart+ZOOM.slideSpan*.96;
+    window.scrollTo({top:targetY,behavior:"instant"});
+    updateScrollStages(window.scrollY,true);
+    applySlide(.012);
+    // The paper moves down with the tracked ball, then relaxes its creases.
+    const entry=paperSlide.animate([
+        {transform:"translateY(-13%) scale(.88)"},
+        {transform:"translateY(2%) scale(1.015)",offset:.8},
+        {transform:"translateY(0) scale(1)"}
+    ],{duration:1100,easing:"cubic-bezier(.2,.65,.3,1)",fill:"forwards"});
+    const ink=document.querySelector(".sheet-achieve");
+    const oldInk=ink.style.visibility;
+    ink.style.visibility="hidden";
+    await new Promise(resolve=>{
+        const start=performance.now();
+        function frame(now){
+            if(run!==rockRollRun){resolve();return;}
+            const u=Math.min(1,(now-start)/1100);
+            applySlide(.012+.948*u);
+            sprite.style.opacity=String(1-Math.min(1,u*7));
+            if(u<1)requestAnimationFrame(frame);else resolve();
+        }
+        requestAnimationFrame(frame);
+    });
+    sprite.remove();entry.cancel();departure.cancel();ball.style.visibility="";
+    hero.classList.remove("phone-cinema-active");
+    ink.style.visibility=oldInk;
+    if(run!==rockRollRun)return;
+    targetSlide=displaySlide=.96;
+    applySlide(.96);
+    cinematicSlideLock=false;
+    updateScrollStages(window.scrollY,true);
+}
+
 function setupPaperBallInteractions() {
     document.querySelectorAll(".interactive-paper-ball").forEach(ball => {
         ball.addEventListener("click", (e) => {
@@ -1341,64 +1406,9 @@ function setupPaperBallInteractions() {
                 return;
             }
             if (paperBallState === "perched") {
-                // roll right off the page, drop to the floor, bounce
-                paperBallState = "rolling";
-                ball.classList.remove("perched");
-                ball.classList.add("is-rolling");
-
-                // the NyayVivek lid tips under the ball's weight, then springs
-                // back once the ball leaves the corner (original choreography)
-                const nyay = document.getElementById("laptopNyay");
-                if (nyay) {
-                    nyay.classList.add("tilting");
-                    setTimeout(() => nyay.classList.remove("tilting"), 580);
-                }
-
-                ballStepTimer = setTimeout(() => {
-                    if (paperBallState !== "rolling") return;
-                    paperBallState = "falling";
-                    ball.classList.remove("is-rolling");
-                    ball.classList.add("is-falling");
-                    ballFallTimer = setTimeout(() => {
-                        if (paperBallState !== "falling") return;
-                        paperBallState = "bouncing";
-                        ball.classList.remove("is-falling");
-                        ball.classList.add("is-bouncing");
-                    }, 620);
-                }, 500);
-                return;
+                openPhonePaperCinema(ball);
             }
 
-            if (paperBallState !== "bouncing") return;
-            paperBallState = "unfolding";
-            paperJourneyOpened = true;
-
-            // the parked plane takes off as its crumpled page unrolls
-            const deskPlane = document.getElementById("deskPlane");
-            if (deskPlane) deskPlane.classList.add("plane-takeoff");
-
-            ball.classList.remove("is-bouncing");
-            ball.classList.add("is-unfolding");
-
-            // Smoothly launch the 3D paper unfold transition
-            const targetY = ZOOM.slideStart + ZOOM.slideSpan * 0.95;
-            window.scrollTo({
-                top: targetY,
-                behavior: "smooth"
-            });
-
-            // Trigger uncrumple directly
-            if (window.updatePaperUnfold) {
-                let p = 0;
-                const anim = setInterval(() => {
-                    p += 0.04;
-                    if (p >= 1) {
-                        p = 1;
-                        clearInterval(anim);
-                    }
-                    applySlide(p);
-                }, 16);
-            }
         });
     });
 

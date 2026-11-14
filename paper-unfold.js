@@ -41,7 +41,7 @@
     // Dimensions calibrated to the sheet texture aspect ratios.
     // Desktop uses her ORIGINAL torn paper (assets/paper-slide.png, 1024 x 470):
     // the wide full-bleed banner sheet from the first design.
-    const PORTRAIT = false;
+    const PORTRAIT = window.matchMedia("(max-width: 768px)").matches;
     const PLANE_W = PORTRAIT ? 5.3 : 10.5;
     const PLANE_H = PORTRAIT ? 5.3 * (816 / 470) : 10.5 / (1024 / 470); // ~9.2 : ~4.82
     const TEXTURE_URL = "assets/paper-slide.png";
