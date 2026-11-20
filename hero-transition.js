@@ -990,24 +990,109 @@ function resetPaperBall() {
 
 async function returnToProjects() {
     if (returningToProjects || cinematicSlideLock) return;
+    if (innerWidth <= 768) { return returnPhoneToProjects(); }
     returningToProjects = true;
-    // Fade the complete outgoing composition, not just its paper. Keep the
-    // next section concealed until the sheet and old environment are gone.
+    cinematicSlideLock = true;
+    const size=40, startX=innerWidth*.34, startY=innerHeight*.34;
+    const sprite=document.createElement("img");
+    sprite.src="assets/paper-ball.png";sprite.alt="";
+    Object.assign(sprite.style,{position:"fixed",left:"0",top:"0",width:size+"px",height:size+"px",zIndex:"1000",pointerEvents:"none",opacity:"0",transform:`translate(${startX}px,${startY}px)`,filter:"drop-shadow(0 5px 4px #0008)"});
+    document.body.appendChild(sprite);
+    if(window.preparePaperBallHandoff)window.preparePaperBallHandoff(sprite);
+    const ink=document.querySelector(".sheet-achieve");
+    const oldInk=ink.style.opacity;ink.style.opacity="0";
+    hero.style.setProperty("--cinematic-ink","0");
+    const foldStart=performance.now();
+    await new Promise(resolve=>{
+        function frame(now){
+            const u=Math.min(1,(now-foldStart)/1150);
+            applySlide(.96-.948*(u*u*(3-2*u)));
+            if(u<1)requestAnimationFrame(frame);else resolve();
+        }
+        requestAnimationFrame(frame);
+    });
+    // Preserve the lower atmosphere while the upper rocks enter underneath.
+    const oldScene=document.querySelector(".rock-roll-scene");
+    const backdrop=oldScene?oldScene.cloneNode(true):null;
+    if(backdrop){Object.assign(backdrop.style,{position:"fixed",inset:"0",visibility:"visible",pointerEvents:"none",zIndex:"997",overflow:"hidden",height:innerHeight+"px",maskImage:"linear-gradient(#000 65%,transparent 100%)"});}
+    // This is a fresh downward arrival, not the outgoing route reversed.
+    projectsView.style.visibility="hidden";
+    resetPaperBall();returningToProjects=true;cinematicSlideLock=true;
+    if(backdrop)hero.appendChild(backdrop);
+    ink.style.opacity=oldInk;
+    const ball=document.getElementById("interactivePaperBallDesk");
+    ball.style.visibility="hidden";
+    window.scrollTo({top:ZOOM.projectsStart+10,behavior:"instant"});
+    window.dispatchEvent(new CustomEvent("project-camera-reset"));
+    returningToProjects=false;updateScrollStages(window.scrollY,true);returningToProjects=true;
+    projectsView.style.visibility="hidden";
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    ball.style.visibility="hidden";
+    const rock=document.querySelector(".rock-stack").getBoundingClientRect();
+    const end=ball.getBoundingClientRect();
+    const landing={x:rock.left+rock.width*.37-size/2,y:rock.top+rock.height*.095-size};
+    paperSlide.style.visibility="hidden";
+    sprite.style.opacity="1";
+    const cameraDrop=innerHeight*.65;
+    const duration=2800;
+    const returnLayers=[];
+    const lift=(node,distance,scale=1)=>{
+        if(!node)return;
+        returnLayers.push(node.animate([
+            {translate:`0 ${distance}px`,scale:String(scale)},
+            {translate:"0 0",scale:"1"}
+        ],{duration,easing:"linear",fill:"both"}));
+    };
+    // The same intact support art and independent depth planes as the
+    // original camera descent, not one flat screenshot translated upward.
+    lift(projectsView.querySelector(".z-stack"),cameraDrop,1.025);
+    ["krishi","nyay","bio"].forEach(key=>lift(projectsView.querySelector(".z-"+key),cameraDrop));
+    lift(projectsView.querySelector(".depth-far"),innerHeight*.28);
+    lift(projectsView.querySelector(".depth-middle"),innerHeight*.52);
+    lift(projectsView.querySelector(".depth-near"),innerHeight*1.05);
+    projectsView.querySelectorAll(".projects-sidebar,.projects-head,.camera-connectors,.project-tape,.looped-arrow").forEach(node=>{
+        returnLayers.push(node.animate([{opacity:0},{opacity:1}],{duration:650,delay:2150,fill:"both"}));
+    });
+    projectsView.style.visibility="visible";
+    let leaving;
+    if(backdrop)leaving=backdrop.animate([{transform:"translateY(0)"},{transform:`translateY(${-innerHeight}px)`}],{duration,easing:"linear",fill:"forwards"});
+    const frames=[];
+    let clock=0,spin=0;
+    const point=(x,y)=>frames.push({t:clock,transform:`translate(${x}px,${y-cameraDrop*Math.min(1,clock/duration)}px) rotate(${spin}deg)`});
+    function move(ax,ay,bx,by,milliseconds,gravity=false,hop=0){
+        const initial=clock;
+        for(let i=0;i<=40;i++){
+            const u=i/40;clock=initial+milliseconds*u;
+            const yy=ay+(by-ay)*(gravity?(.7*u+.3*u*u):u)-Math.sin(Math.PI*u)*hop;
+            spin+=3;point(ax+(bx-ax)*u,yy);
+        }
+    }
+    // World Y only increases: the camera follows the new downward journey.
+    move(startX,startY,landing.x,landing.y+cameraDrop,1500,true);
+    move(landing.x,landing.y+cameraDrop,landing.x+30,landing.y+cameraDrop+8,300,false,15);
+    const lip={x:end.left-115,y:end.top-82+cameraDrop};
+    move(landing.x+30,landing.y+cameraDrop+8,lip.x,lip.y,400);
+    move(lip.x,lip.y,end.left,end.top+cameraDrop,350,true);
+    move(end.left,end.top+cameraDrop,end.left,end.top+cameraDrop,250,false,7);
+    const drop=sprite.animate(frames.map(f=>({offset:f.t/duration,transform:f.transform})),{duration,easing:"linear",fill:"forwards"});
+    await drop.finished.catch(()=>{});
+    returnLayers.forEach(a=>a.cancel());if(leaving)leaving.cancel();if(backdrop)backdrop.remove();sprite.remove();ball.style.visibility="";
+    cinematicSlideLock=false;returningToProjects=false;
+    updateScrollStages(window.scrollY,true);
+}
+
+async function returnPhoneToProjects() {
+    if (returningToProjects || cinematicSlideLock) return;
+    returningToProjects = true;
     const out=hero.animate([{opacity:1},{opacity:0}],{duration:140,fill:"forwards",easing:"ease-out"});
     await out.finished.catch(()=>{});
-    resetPaperBall();
-    targetSlide=displaySlide=0;
-    applySlide(0);
+    resetPaperBall();targetSlide=displaySlide=0;applySlide(0);
     window.dispatchEvent(new CustomEvent("project-camera-return"));
     window.scrollTo({top:ZOOM.projectsStart+10,behavior:"instant"});
-    returningToProjects=false;
-    updateScrollStages(window.scrollY, true);
-    // Paint the restored section while it is still concealed.
+    returningToProjects=false;updateScrollStages(window.scrollY,true);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const incoming=hero.animate([{opacity:0},{opacity:1}],{duration:140,fill:"forwards",easing:"ease-in"});
-    out.cancel();
-    await incoming.finished.catch(()=>{});
-    incoming.cancel();
+    const incoming=hero.animate([{opacity:0},{opacity:1}],{duration:140,fill:"forwards"});
+    out.cancel();await incoming.finished.catch(()=>{});incoming.cancel();
 }
 
 function setupProjectNavFocus() {
@@ -1745,6 +1830,7 @@ function setupProjectsCamera() {
     navItems.forEach(function (item, i) {
         item.addEventListener("click", function () { setTarget(STOPS[i].p); });
     });
+    window.addEventListener("project-camera-reset", function() {prog=target=0;kick();});
     window.addEventListener("project-camera-return", function() {prog=target=.85;kick();});
     window.addEventListener("project-camera-overview", function(e) { overviewReady = e.detail && e.detail.onSettled; setTarget(0); });
     window.addEventListener("resize", kick);
