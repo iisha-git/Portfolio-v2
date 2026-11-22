@@ -1059,21 +1059,29 @@ async function returnToProjects() {
     const frames=[];
     let clock=0,spin=0;
     const point=(x,y)=>frames.push({t:clock,transform:`translate(${x}px,${y-cameraDrop*Math.min(1,clock/duration)}px) rotate(${spin}deg)`});
-    function move(ax,ay,bx,by,milliseconds,gravity=false,hop=0){
+    // Projectile segments: vertical motion follows gravity, horizontal speed
+    // stays constant, so every leg traces a real arc instead of a straight slide.
+    //   drop - leaves at rest, accelerates downward (u^2)
+    //   hop  - parabola rising above the line by `hop` px (bounce/up-step)
+    //   linear - uniform (flat carry)
+    function move(ax,ay,bx,by,milliseconds,mode='linear',hop=0){
         const initial=clock;
         for(let i=0;i<=40;i++){
             const u=i/40;clock=initial+milliseconds*u;
-            const yy=ay+(by-ay)*(gravity?(.7*u+.3*u*u):u)-Math.sin(Math.PI*u)*hop;
+            let k=u;
+            if(mode==='drop')k=u*u;
+            else if(mode==='hop')k=u-Math.sin(Math.PI*u)*hop/Math.max(1,Math.abs(by-ay)+hop*2);
+            const yy=mode==='hop'?ay+(by-ay)*u-Math.sin(Math.PI*u)*hop:ay+(by-ay)*k;
             spin+=3;point(ax+(bx-ax)*u,yy);
         }
     }
     // World Y only increases: the camera follows the new downward journey.
-    move(startX,startY,landing.x,landing.y+cameraDrop,1500,true);
-    move(landing.x,landing.y+cameraDrop,landing.x+30,landing.y+cameraDrop+8,300,false,15);
+    move(startX,startY,landing.x,landing.y+cameraDrop,1500,'drop');
+    move(landing.x,landing.y+cameraDrop,landing.x+30,landing.y+cameraDrop+8,300,'hop',15);
     const lip={x:end.left-115,y:end.top-82+cameraDrop};
-    move(landing.x+30,landing.y+cameraDrop+8,lip.x,lip.y,400);
-    move(lip.x,lip.y,end.left,end.top+cameraDrop,350,true);
-    move(end.left,end.top+cameraDrop,end.left,end.top+cameraDrop,250,false,7);
+    move(landing.x+30,landing.y+cameraDrop+8,lip.x,lip.y,400,'hop',46);
+    move(lip.x,lip.y,end.left,end.top+cameraDrop,350,'drop');
+    move(end.left,end.top+cameraDrop,end.left,end.top+cameraDrop,250,'hop',7);
     const drop=sprite.animate(frames.map(f=>({offset:f.t/duration,transform:f.transform})),{duration,easing:"linear",fill:"forwards"});
     await drop.finished.catch(()=>{});
     returnLayers.forEach(a=>a.cancel());if(leaving)leaving.cancel();if(backdrop)backdrop.remove();sprite.remove();ball.style.visibility="";

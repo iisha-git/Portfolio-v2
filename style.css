@@ -4481,7 +4481,7 @@ html {
     aspect-ratio: 21 / 9;
     overflow: hidden;
     background: #e8e0cf;
-    box-shadow: inset 0 0 0 1px #c9bb9c;
+    box-shadow: inset 0 0 0 2px #8b6ee8;
 }
 
 .clip-photo img {
@@ -4546,9 +4546,9 @@ html {
 
 .ribbon-frame {
     position: relative;
-    background: #fdfaf3;
+    background: #e9e1f8;
     padding: 10px 10px 12px;
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), inset 0 0 0 1.5px #b9a3ec;
 }
 
 .ribbon-frame::before,
@@ -4574,8 +4574,8 @@ html {
 
 .ribbon-award {
     position: absolute;
-    top: -26px;
-    left: -22px;
+    top: -80px;
+    left: -24px;
     width: 84px;
     height: 104px;
     margin: 0;
@@ -4633,11 +4633,11 @@ html {
 
 /* --- object 3: the ticket stub --- */
 .win-ticket {
-    left: 9%;
+    left: 4%;
     right: auto;
-    top: 27%;
+    top: 14.5%;
     bottom: auto;
-    width: clamp(260px, 22vw, 340px);
+    width: clamp(240px, 20vw, 300px);
     --r: -1.6deg;
     z-index: 2;
 }
@@ -4651,7 +4651,7 @@ html {
 
 .ticket-main {
     flex: 1;
-    padding: 14px 16px;
+    padding: 9px 12px;
     border-right: 2px dashed #c9bb9c;
     display: flex;
     flex-direction: column;
@@ -4661,7 +4661,7 @@ html {
 .ticket-label {
     font-family: 'Caveat', cursive;
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: #5b21b6;
     line-height: 1;
 }
@@ -4682,7 +4682,7 @@ html {
 }
 
 .ticket-stub {
-    width: 62px;
+    width: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4699,9 +4699,9 @@ html {
     left: 8%;
     top: 34%;
     width: clamp(230px, 20vw, 320px);
-    background: #fdfaf3;
+    background: #e9e1f8;
     padding: 7px 7px 9px;
-    box-shadow: 0 14px 30px rgba(43, 33, 24, 0.38);
+    box-shadow: 0 14px 30px rgba(43, 33, 24, 0.38), inset 0 0 0 1.5px #b9a3ec;
     --r: 2deg;
     z-index: 1;
 }
@@ -4774,7 +4774,7 @@ html {
 
 .note-sih    { left: -1%;  top: auto; bottom: -10%; transform: rotate(-4deg); }
 .note-ai     { left: auto; right: 2%; top: auto; bottom: -16%; transform: rotate(-3deg); }
-.note-eureka { left: 15%;  right: auto; top: calc(100% + 12vw + 12px); bottom: auto; transform: rotate(3deg); }
+.note-eureka { left: 4%;  right: auto; top: calc(100% + 8px); bottom: auto; transform: rotate(2deg); }
 
 .hero.sheet-open .frame-note,
 .hero.sheet-open .sheet-scribble {
@@ -4849,7 +4849,7 @@ html {
  .stamp-win {font-size:12px;right:-2px;bottom:-36px;padding:8px;letter-spacing:1px;}
  .win-ribbon {right:3%;top:52%;width:43%;}
  .ribbon-frame {padding:7px;}
- .ribbon-award {transform:rotate(-9deg) scale(.58);transform-origin:top left;left:-12px;top:-15px;}
+ .ribbon-award {transform:rotate(-9deg) scale(.5);transform-origin:top left;left:-12px;top:34%;}
  .ribbon-cap {font-size:14px;}
  .ticket-photo {left:4%;top:52%;width:40%;height:auto;}
  .ticket-photo img {width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;}
